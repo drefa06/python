@@ -756,8 +756,11 @@ x52.inc_bar5_1, duration =  19.5466928482
 
 ### Conclusion ###
 
-Last solution is very long, around 20sec for 1 Million loop => 20 usec per loop. It's 10 time solution 4 that give good protection too. solution 3 is a good alternative to have a little protection with quick result
-Solution 1 and 2 do not give any protection. Enough for many case you do not care it, but not for a big project with many undefined or badly defined input.
+Last solution is very long, around 20sec for 1 Million loop => 20 usec per loop. It's 10 time solution 4 that give good protection. 
+
+Solution 3 is a good alternative to have a little protection with quick result. 1,20 usec per loop, it's 4 times longer than solution 1 and 2 times worst than solution 2.
+
+Solution 1 and 2 do not give any protection at all. It's enough for many case, but not for a big project with many undefined or badly defined input ! That was why I looked for a better system.
 
 
 
