@@ -691,6 +691,7 @@ If you need to execute the script very quickly, do you really need a "very" priv
 
 And if you need a very quick execution, do you really need to continue this script in python... why not a compiled language (like C)
 
+### The test ###
 The speed execution test:
 - create 1 father class instance and its son
 - Loop 1 Million time: set initial value, incremente with loop value (val+=1 at first loop, val+=1000000 at last one)
@@ -753,5 +754,10 @@ x51.inc_bar2, duration =  19.1623969078
 x52.inc_bar5_1, duration =  19.5466928482
 ```
 
-Last solution 
+### Conclusion ###
+
+Last solution is very long, around 20sec for 1 Million loop => 20 usec per loop. It's 10 time solution 4 that give good protection too. solution 3 is a good alternative to have a little protection with quick result
+Solution 1 and 2 do not give any protection. Enough for many case you do not care it, but not for a big project with many undefined or badly defined input.
+
+
 
