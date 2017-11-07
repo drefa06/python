@@ -805,7 +805,7 @@ class foo3_1(object):
 
         if not type_good: raise TypeError("bar1 must be %s " % str(self.__public['bar1']['type']))
 
-        self.__protected['bar1']['value']=val
+        self.__public['bar1']['value']=val
 
 
     @property
@@ -921,7 +921,7 @@ def stress3():
 
        
 ################################################################################
-class _attribute:
+class _attribute1:
     __name__= None
     __order = 'public'
     __type = int
@@ -963,7 +963,7 @@ class foo4_1(object):
 
     #private method to set, get or del private attribute __attribute
     def __set__attribute(self,key,val):
-        self.__attribute[key]=val
+        self.__my_attribute[key]=val
 
     def __get__attribute(self,inAttrName):
         if self.__my_attribute.has_key(inAttrName):
@@ -983,7 +983,7 @@ class foo4_1(object):
 
     def __attributeValue(self, operation,attrName,newValue=None):
         if operation == 'new': 
-            attr=_attribute(attrName,newValue)
+            attr=_attribute1(attrName,newValue)
             self.__set__attribute(attrName,attr)
 
         elif operation == 'del':
@@ -1096,11 +1096,12 @@ class foo4_5(foo4_3,foo4_4):
 
 ################################################################################
 def attribute4():
+    pdb.set_trace()
     x41=foo4_1()
     x42=foo4_2()
 
     x45=foo4_5()
-
+    pdb.set_trace()
     print "1-  read x41.bar1 =",x41.bar1
     print "    read x41.bar3 =",x41.bar3
     print "    set x41.bar1 = 10"
@@ -1228,10 +1229,12 @@ def stress4():
 ################################################################################
 import re
 
-class __attribute:
-    __name__= None
-    __type = int
-    __value = None
+class _attribute:
+    __name__  = None
+    __type    = int
+    __value   = None
+    __private = False
+    __default = None
 
     def __init__(self,name,val):
         self.__name__  = name
@@ -1242,16 +1245,18 @@ class __attribute:
 
     @property
     def value(self): return self.__value
-    @value.setter
-    def value(self,val):
-        if not isinstance(val,self.__type):
-            raise TypeError("%s must be %s " % (self.__name__,str(self.__type))) 
-        self.__value = val
+    #@value.setter
+    #def value(self,val):
+    #    if not isinstance(val,self.__type):
+    #        raise TypeError("Incorrect type %s it must be %s " % (self.__name__,str(self.__type))) 
+    #    self.__value = val
 
     @property
     def private(self): return self.__private    #readonly parameter
     @property
     def default(self): return self.__default    #readonly parameter
+    @property
+    def type(self):    return self.__type       #readonly parameter
   
 
 class attribute_ctrl:
@@ -1268,6 +1273,8 @@ class attribute_ctrl:
         attr=_attribute(attrName,attrValue)
         self.__my_attribute[attrName]=attr
 
+        #setattr(self, attrName, attr.default)
+
     def del__attribute(self,attrName):
         if not self.__my_attribute.has_key(attrName):
             raise AttributeError("Cannot delete a missing attribute: %s" % (attrName,))
@@ -1276,16 +1283,37 @@ class attribute_ctrl:
 
 
     def has__attribute(self,attrName):
-        if self.__my_attribute.has_key(attrName): return True
-        else:  return False
+        return  self.__my_attribute.has_key(attrName) 
 
 
     #private method to set, get or del private attribute __attribute
     def _set__attribute(self,attrName,args):
-        self.__my_attribute[attrName].value=args[0]
+        if len(args) > 1:
+            newValue = self.__insertItems(self.__my_attribute[attrName].value,args[0], args[1])
+
+            self.__my_attribute[attrName].value=newValue
+        else:
+            myTypeIsGood=False
+            if isinstance(self.__my_attribute[attrName].type,list):
+                
+                for t in self.__my_attribute[attrName].type:
+                    if isinstance(args[0],t): 
+                        myTypeIsGood = True
+                        break
+                
+            elif isinstance(args[0],self.__my_attribute[attrName].type):
+                myTypeIsGood = True
+
+            if not myTypeIsGood:
+                raise TypeError("%s: Incorrect type %s it must be %s " % (args[0],str(type(args[0])),str(self.__my_attribute[attrName].type))) 
+
+            self.__my_attribute[attrName].value=args[0]
 
     def _get__attribute(self,attrName, args=[]):
-        return self.__my_attribute[attrName].value
+        value = self.__my_attribute[attrName].value
+        if len(args) > 0: 
+            value = self.__extractItems(value, args[0])
+        return value
 
     def _rst__attribute(self,attrName):
         self.__my_attribute[attrName].value=self.__my_attribute[attrName].default
@@ -1309,14 +1337,40 @@ class attribute_ctrl:
 
             if accessor.startswith('get_'):          return self._get__attribute(attrName, args=list(args))
             elif accessor.startswith('set_'):        return self._set__attribute(attrName, args=list(args))
-            #elif accessor.startswith('setItems_'):   return self._setItems(attrName, args=list(args))
-            #elif accessor.startswith('getItems_'):   return self._getItems(attrName, args=args[0])
             elif accessor.startswith('rst_'):        return self._rst__attribute(attrName)
             elif accessor.startswith('getDefault_'): return self._getDefault__attribute(attrName)
             elif accessor.startswith('chkEq_'):      return self._checkEqual__attribute(attrName, args=list(args))
             elif accessor.startswith('chkType_'):    return self._chkType__attribute(attrName, args=list(args))
             else:
                 raise AttributeError(attrName)
+
+
+    def __extractItems(self,value,args):
+        if isinstance(args,list):
+            arg=args.pop(0)
+            if len(args)==0: args=None
+        else:
+            arg=args
+            args=None
+        
+        outputValue=value[arg]
+        
+        if args!=None:
+            return self.__extractItems(outputValue,args)
+        else:
+            return outputValue
+        
+    def __insertItems(self,attr,value,pos):
+        if isinstance(pos,list):
+            p=pos.pop(0)
+            if len(pos) == 1: pos=pos[0]
+            newAttr=attr[p]
+            attr[p] = self.__insertItems(newAttr,value,pos)
+            return attr
+        else:
+            attr[pos]=value
+            return attr
+       
 
 
 class foo5_1(attribute_ctrl):
@@ -1331,31 +1385,23 @@ class foo5_1(attribute_ctrl):
             self.__attr_init = True
 
         # create attribute bar1 and bar3 that can be called via accessor
-        self.new__attribute('bar1',{'private':False,   'type':int, 'value':0})
-        self.new__attribute('bar2',{'private':self.__name__,'type':int,  'value':100})
+        self.new__attribute('bar1',{'private':False,   'type':[int,long], 'value':0})
+        self.new__attribute('bar2',{'private':self.__name__,'type':[int,long],  'value':100})
         self.new__attribute('bar3',{'private':'foo5_1','type':list, 'value':[]})
 
     def __getattr__(self,attr):
         my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
+        
         if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
             attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
             return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
+
         else:
             raise AttributeError("Undefined attribute "+attr)
 
-    @property
-    def bar1(self): return self.get__bar1()
-    @bar1.setter
-    def bar1(self,val): self.set__bar1(val)
 
-    @property
-    def bar2(self): return self.get__bar2()
-    @bar2.setter
-    def bar2(self,val): self.set__bar2(val)
-
-    def inc_bar1(self,val): self.bar1+=val
-    def inc_bar2(self,val): self.bar2+=val
-    #def inc_bar2(self,val): self.set__bar2(self.get__bar2() + val)
+    def inc_bar1(self,val): self.set__bar1(self.get__bar1() + val)
+    def inc_bar2(self,val): self.set__bar2(self.get__bar2() + val)
 
 
 class foo5_2(attribute_ctrl,foo5_1):
@@ -1364,50 +1410,36 @@ class foo5_2(attribute_ctrl,foo5_1):
     def __init__(self):
         foo5_1.__init__(self)
 
-
         # create attribute bar1 and bar3 that can be called via accessor
         self.new__attribute('bar4',{'private':False,   'type':dict, 'value':{}})
-        self.new__attribute('bar5',{'private':'foo5_2','type':int,  'value':0})
+        self.new__attribute('bar5',{'private':'foo5_2','type':[int,long],  'value':0})
         self.new__attribute('bar6',{'private':'False','type':list, 'value':[]})
 
-    def __getattr__(self,attr):
-        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
-        if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
-            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
-            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
-        else:
-            raise AttributeError("Undefined attribute "+attr)
+    def inc_bar5(self,val): self.set__bar5(self.get__bar5() + val)
 
-    @property
-    def bar5(self): return self.get__bar5()
-    @bar5.setter
-    def bar5(self,val): self.set__bar5(val)
-
-
-    def inc_bar5(self,val): self.bar5 += val
 
 ################################################################################
 def attribute5():
     x51=foo5_1()
     x52=foo5_2()
 
-    print "1-  read x51.bar1 =",x51.bar1
+    print "1-  read x51.bar1 =",x51.get__bar1()
     print "    read x51.bar2 =",x51.get__bar2()
     print "    set x51.bar1 = 10"
-    x51.bar1 = 10
-    print "    => x51.bar1 =",x51.bar1
+    x51.set__bar1(10)
+    print "    => x51.bar1 =",x51.get__bar1()
     print "    set x51.bar2 = 30"
     x51.set__bar2(30)
     print "    => x51.bar2 =",x51.get__bar2()
 
-    print "2-  read x52.bar1 =",x52.bar1
+    print "2-  read x52.bar1 =",x52.get__bar1()
     try:
         print "    read x52.bar2 =",x52.get__bar2()
     except Exception,err:
         print str(err)
     print "    set x52.bar1 = 20"
-    x52.bar1 = 20
-    print "   => x52.bar1 =",x52.bar1
+    x52.set__bar1(20)
+    print "   => x52.bar1 =",x52.get__bar1()
     try:
         print "    set x52.bar2 = 40"
         x52.set__bar2(40)
@@ -1433,6 +1465,20 @@ def attribute5():
     except Exception,err:
         print str(err)
 
+    x51.set__bar3([1,2,"trois",4,[51,52,53],6,7,{'81':1,'82':4,'83':2},9,0])
+    print "2nd element = ",x51.get__bar3(1)
+    print "3rd element = ",x51.get__bar3(2)
+    print "3rd part of 5th element = ",x51.get__bar3([4,2])
+    print "index '81' of 7th element = ",x51.get__bar3([7,'81'])
+
+    x51.set__bar3("deux",1)
+    print x51.get__bar3()
+    x51.set__bar3([31,32],3)
+    print x51.get__bar3()
+    x51.set__bar3(54,[4,2])
+    print x51.get__bar3()
+    x51.set__bar3(3,[7,'81'])
+    print x51.get__bar3()
 
 
     print x51.__dict__
@@ -1447,12 +1493,12 @@ def stress5():
     duration=time.time()-start
     print "duration = ",duration*1000000,"us"
 
-    x51.bar1=1000
+    x51.set__bar1(1000)
     for i in range(1000000): x51.inc_bar1(i)
     duration=time.time()-start
     print "x51.inc_bar1, duration = ",duration
     start=time.time()
-    x52.bar1=1000
+    x52.set__bar1(1000)
     for i in range(1000000): x52.inc_bar1(i)
     duration=time.time()-start
     print "x52.inc_bar1, duration = ",duration
@@ -1463,24 +1509,24 @@ def stress5():
     duration=time.time()-start
     print "x51.inc_bar2, duration = ",duration
 
-    pdb.set_trace()
     start=time.time()
     x52.set__bar5(1000)
     for i in range(1000000): x52.inc_bar5(i)
     duration=time.time()-start
-    print "x52.inc_bar5, duration = ",duration
+    print "x52.inc_bar5_1, duration = ",duration
+
 
 
 ################################################################################
 def main(args):
     #attribute1()
-    #stress1()
+    stress1()
     #attribute2()
-    #stress2()
+    stress2()
     #attribute3()
-    #stress3()
+    stress3()
     #attribute4()
-    #stress4()
+    stress4()
     #attribute5()
     stress5()
 

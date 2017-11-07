@@ -484,7 +484,6 @@ Create a class for the type Attribute with value and other usefull properties of
 ```python
 class _attribute:
     __name__= None
-    __order = 'public'
     __type = int
     __value = None
 
@@ -583,11 +582,176 @@ and inherited class only declare their variables and accessors.
 
 ### go further ###
 
-OK finally I got a solution (complex) to have private/public attribute with type control and accessor for each class.
+Finally here is my solution to have private/public attribute with type control and accessor for each class.
 So I only have to:
 - give to set/get the possibility to access 1 param if list/dict/class
 - add some other usefull accessor
-- create simple and uniq way to access them in father class.
+- create a dynamic way to access them in father class.
+
+To do that:
+- keep the class _attribute as previously defined
+- create a class attribute_ctrl that will contains all accessors like:
+```python
+class attribute_ctrl:
+    attribute_accessor = ['has_','get_','set_','rst_','getDefault_','chkEq_','chkType_']
+
+    def __init__(self):
+        self.__my_attribute=dict()
+
+    #Attribute creation/deletion
+    def new__attribute(self,attrName,attrValue):
+        if self.__my_attribute.has_key(attrName):
+            raise AttributeError("Cannot recreate an existing attribute: %s" % (attrName,))
+        
+        attr=_attribute(attrName,attrValue)
+        self.__my_attribute[attrName]=attr
+
+    def del__attribute(self,attrName):
+        if not self.__my_attribute.has_key(attrName):
+            raise AttributeError("Cannot delete a missing attribute: %s" % (attrName,))
+
+        del self.__my_attribute[attrName]
 
 
+    def has__attribute(self,attrName):
+        if self.__my_attribute.has_key(attrName): return True
+        else:  return False
+
+
+    #private method to set, get or del private attribute __attribute
+    def _set__attribute(self,attrName,args):
+        self.__my_attribute[attrName].value=args[0]
+
+    def _get__attribute(self,attrName, args=[]):
+        return self.__my_attribute[attrName].value
+
+    def _rst__attribute(self,attrName):
+        self.__my_attribute[attrName].value=self.__my_attribute[attrName].default
+
+    def _getDefault__attribute(self,attrName):
+        return self.__my_attribute[attrName].default
+
+    def _checkEqual__attribute(self,attrName,args):
+        return  self.__my_attribute[attrName].value == args[0]
+
+    def _checkType__attribute(self,attrName,args):
+        return  self.__my_attribute[attrName].type == args[0]
+
+
+    def _attribute_accessor_execute(self,accessor,attrName, *args):
+        if accessor.startswith('has_'):		return self.has__attribute(attrName)
+        else:
+            if not self.has__attribute(attrName): raise AttributeError("Undefined variable "+attrName)
+            if self.__my_attribute[attrName].private != False and self.__my_attribute[attrName].private != self.__name__:
+                raise AttributeError("%s is Private attribute of class %s" % (attrName,self.__my_attribute[attrName].private))
+
+            if accessor.startswith('get_'):          return self._get__attribute(attrName, args=list(args))
+            elif accessor.startswith('set_'):        return self._set__attribute(attrName, args=list(args))
+            elif accessor.startswith('rst_'):        return self._rst__attribute(attrName)
+            elif accessor.startswith('getDefault_'): return self._getDefault__attribute(attrName)
+            elif accessor.startswith('chkEq_'):      return self._checkEqual__attribute(attrName, args=list(args))
+            elif accessor.startswith('chkType_'):    return self._chkType__attribute(attrName, args=list(args))
+            else:
+                raise AttributeError(attrName)
+```
+- define your class that use attribute like:
+```python
+class foo5_1(attribute_ctrl):
+    __name__='foo5_1'
+    __attr_init=False
+
+    def __init__(self):
+        # to be sure to create dictionnary only once
+        if not self.__attr_init:
+            attribute_ctrl.__init__(self)
+            self.__attr_init = True
+
+        # create attribute bar1 and bar3 that can be called via accessor
+        self.new__attribute('bar1',{'private':False,        'type':int,  'value':0})
+        self.new__attribute('bar2',{'private':self.__name__,'type':int,  'value':100})
+        self.new__attribute('bar3',{'private':'foo5_1',     'type':list, 'value':[]})
+
+    def __getattr__(self,attr):
+        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
+        if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
+            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
+            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
+        else:
+            raise AttributeError("Undefined attribute "+attr)
+
+```
+Note that you cannot anymore use property with this kind of script, so you must use <classinstance>.get__bar1() instead of <classinstance>.bar1
+
+## Performance ##
+
+The more complex it is, the more slowly it is executed !!!
+The execution speed is your first reason for choosing one solution instead of another.
+
+If you need to execute the script very quickly, do you really need a "very" private attribute with type control? or only type control?
+
+And if you need a very quick execution, do you really need to continue this script in python... why not a compiled language (like C)
+
+The speed execution test:
+- create 1 father class instance and its son
+- Loop 1 Million time: set initial value, incremente with loop value (val+=1 at first loop, val+=1000000 at last one)
+
+Result:
+```
+STRESS TEST 1:
+create class instance duration =  6.91413879395 us
+x11.inc1_bar1_1: duration =  0.322773933411
+x12.inc1_bar1_1: duration =  0.319699764252
+x11.inc1_bar2_1, duration =  0.377185106277
+x21.inc1_bar2_1, duration =  0.381103038788
+x11.inc1_bar3_1, duration =  0.311001062393
+x12.inc1_bar3_1, duration =  0.312275886536
+x11.inc1_bar4_1, duration =  0.322607040405
+x12.inc1_bar4_1, duration =  0.315726041794
+
+STRESS TEST 2:
+create class instance duration =  10.0135803223 us #one father class and its son
+x11.inc_bar1_1, duration =  0.557997941971
+x11.inc_bar1_2, duration =  0.582129001617
+x12.inc_bar1_1, duration =  0.590847969055
+x12.inc_bar1_2, duration =  0.615960836411
+x11.inc_bar2_1, duration =  0.563507080078
+x11.inc_bar2_2, duration =  0.593226909637
+x12.inc_bar2_1, duration =  0.616235017776
+x12.inc_bar2_2, duration =  0.631829977036
+x11.inc_bar3_1, duration =  0.570791006088
+x11.inc_bar3_2, duration =  0.273704051971
+x12.inc_bar3_1, duration =  0.613743066788
+x12.inc_bar3_2, duration =  0.292140960693
+x11.inc_bar4_1, duration =  0.568605899811
+x11.inc_bar4_2, duration =  0.279685974121
+x12.inc_bar4_1, duration =  0.600373983383
+x12.inc_bar4_2, duration =  0.310114145279
+
+STRESS TEST 3:
+create class instance duration =  19.0734863281 us #one father class and its son
+x31.inc_bar1_1, duration =  1.18607401848
+x31.inc_bar1_2, duration =  1.241065979
+x32.inc_bar1_1, duration =  1.19531607628
+x32.inc_bar1_2, duration =  1.19499206543
+x31.inc_bar2, duration =  1.35262513161
+x31.inc_bar3, duration =  0.614826917648
+x32.inc_bar3, duration =  0.624508857727
+
+STRESS TEST 4:
+create class instance duration =  45.0611114502 us #one father class and its son
+x41.inc_bar1, duration =  2.81534409523
+x42.inc_bar1, duration =  2.84008193016
+x42.inc_bar2, duration =  2.92311406136
+x41.inc_bar3, duration =  3.47706890106
+x42.inc_bar4, duration =  3.49937987328
+
+STRESS TEST 5:
+create class instance duration =  48.1605529785 us #one father class and its son
+x51.inc_bar1, duration =  18.1415200233
+x52.inc_bar1, duration =  18.6169130802
+x51.inc_bar2, duration =  19.1623969078
+x52.inc_bar5_1, duration =  19.5466928482
+```
+
+Last solution 
 
