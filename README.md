@@ -3,6 +3,6 @@
 ## Attribute ##
 
 attribute.py contains some usage around class attribute.
-see [attribute.md](attribute.md)
+see [attribute_howto.md](attribute_howto.md)
 
 
