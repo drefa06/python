@@ -598,6 +598,14 @@ class attribute_ctrl:
     def __init__(self):
         self.__my_attribute=dict()
 
+    def __getattr__(self,attr):
+        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
+        if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
+            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
+            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
+        else:
+            raise AttributeError("Undefined attribute "+attr)
+
     #Attribute creation/deletion
     def new__attribute(self,attrName,attrValue):
         if self.__my_attribute.has_key(attrName):
@@ -605,6 +613,8 @@ class attribute_ctrl:
         
         attr=_attribute(attrName,attrValue)
         self.__my_attribute[attrName]=attr
+
+        #setattr(self, attrName, attr.default)
 
     def del__attribute(self,attrName):
         if not self.__my_attribute.has_key(attrName):
@@ -614,16 +624,38 @@ class attribute_ctrl:
 
 
     def has__attribute(self,attrName):
-        if self.__my_attribute.has_key(attrName): return True
-        else:  return False
+        return  self.__my_attribute.has_key(attrName) 
+
 
 
     #private method to set, get or del private attribute __attribute
     def _set__attribute(self,attrName,args):
-        self.__my_attribute[attrName].value=args[0]
+        if len(args) > 1 and len(args[1]) > 0:
+            newValue = self.__insertItems(self.__my_attribute[attrName].value,args[0], args[1])
+
+            self.__my_attribute[attrName].value=newValue
+        else:
+            myTypeIsGood=False
+            if isinstance(self.__my_attribute[attrName].type,list):
+                
+                for t in self.__my_attribute[attrName].type:
+                    if isinstance(args[0],t): 
+                        myTypeIsGood = True
+                        break
+                
+            elif isinstance(args[0],self.__my_attribute[attrName].type):
+                myTypeIsGood = True
+
+            if not myTypeIsGood:
+                raise TypeError("%s: Incorrect type %s it must be %s " % (args[0],str(type(args[0])),str(self.__my_attribute[attrName].type))) 
+
+            self.__my_attribute[attrName].value=args[0]
 
     def _get__attribute(self,attrName, args=[]):
-        return self.__my_attribute[attrName].value
+        value = self.__my_attribute[attrName].value
+        if len(args) > 0 and len(args[0]) > 0: 
+            value = self.__extractItems(value, args[0])
+        return value
 
     def _rst__attribute(self,attrName):
         self.__my_attribute[attrName].value=self.__my_attribute[attrName].default
@@ -653,32 +685,45 @@ class attribute_ctrl:
             elif accessor.startswith('chkType_'):    return self._chkType__attribute(attrName, args=list(args))
             else:
                 raise AttributeError(attrName)
+
+    def __extractItems(self,value,args):
+        if isinstance(args,list):
+            arg=args.pop(0)
+            if len(args)==0: args=None
+        else:
+            arg=args
+            args=None
+        
+        outputValue=value[arg]
+        
+        if args!=None:
+            return self.__extractItems(outputValue,args)
+        else:
+            return outputValue
+        
+    def __insertItems(self,attr,value,pos):
+        if isinstance(pos,list):
+            p=pos.pop(0)
+            if len(pos) == 1: pos=pos[0]
+            newAttr=attr[p]
+            attr[p] = self.__insertItems(newAttr,value,pos)
+            return attr
+        else:
+            attr[pos]=value
+            return attr
 ```
 - define your class that use attribute like:
 ```python
 class foo5_1(attribute_ctrl):
     __name__='foo5_1'
-    __attr_init=False
 
     def __init__(self):
-        # to be sure to create dictionnary only once
-        if not self.__attr_init:
-            attribute_ctrl.__init__(self)
-            self.__attr_init = True
+        attribute_ctrl.__init__(self)
 
         # create attribute bar1 and bar3 that can be called via accessor
         self.new__attribute('bar1',{'private':False,        'type':int,  'value':0})
         self.new__attribute('bar2',{'private':self.__name__,'type':int,  'value':100})
         self.new__attribute('bar3',{'private':'foo5_1',     'type':list, 'value':[]})
-
-    def __getattr__(self,attr):
-        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
-        if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
-            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
-            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
-        else:
-            raise AttributeError("Undefined attribute "+attr)
-
 ```
 Note that you cannot anymore use property with this kind of script, so you must use <classinstance>.get__bar1() instead of <classinstance>.bar1
 
@@ -754,9 +799,47 @@ x51.inc_bar2, duration =  19.1623969078
 x52.inc_bar5_1, duration =  19.5466928482
 ```
 
+solution 4 is acceptable, solution 5 is very long !
+The main difference is that in solution5 we call __getattr__ for each access to attribute.
+
+The idea is an intermediate solution that is like solution5 but we add specific accessor for the usefull get_ and set_ accessor in class that inherit directly from attribute:
+```python
+    def get__bar1(self,*args):       return self.get__attrName('bar1',args)
+    def set__bar1(self,value,*args): self.set__attrName('bar1',value,args)
+    def get__bar2(self,*args):       return self.get__attrName('bar2',args)
+    def set__bar2(self,value,*args): self.set__attrName('bar2',value,args)
+    def get__bar3(self,*args):       return self.get__attrName('bar3',args)
+    def set__bar3(self,value,*args): self.set__attrName('bar3',value,args)
+```
+and add general accessor in class attribute:
+```python
+    def get__attrName(self,attrName,args=[]):           return self._attribute_accessor_execute('get_',attrName, args)
+    def set__attrName(self,attrName,attrValue,args=[]): self._attribute_accessor_execute('set_',attrName, attrValue, args)
+    def rst__attrName(self,attrName,args=[]):           return self._attribute_accessor_execute('rst_',attrName, args)
+    def getDefault__attrName(self,attrName,args=[]):    return self._attribute_accessor_execute('getDefault_',attrName, args)
+    def chkEq__attrName(self,attrName,args=[]):         return self._attribute_accessor_execute('chkEq_',attrName, args)
+    def chkType__attrName(self,attrName,args=[]):       return self._attribute_accessor_execute('chkType_',attrName, args)
+```
+
+with this solution, stress test 5 become:
+```
+STRESS TEST 5:
+duration =  26.9412994385 us
+x51.inc_bar1, duration =  6.33423900604
+x52.inc_bar1, duration =  6.58494591713
+x51.inc_bar2, duration =  19.7416229248
+x52.inc_bar5_1, duration =  20.2298278809
+```
+It's less generic but 3 times more quick!
+
+Note: unless all this mecanism to create "private" access to class variable, we still able to get it via following command:
+```<classInstanceName>.__dict__['_attribute_ctrl__my_attribute']['bar2'].__dict__['value']```
+
 ### Conclusion ###
 
-Last solution is very long, around 20sec for 1 Million loop => 20 usec per loop. It's 10 time solution 4 that give good protection. 
+solution5 is very long, around 20sec for 1 Million loop => 20 usec per loop. It's 10 times solution 4 that give good protection. 
+
+But with last modif solution 5 is only 3 times solution 4 !
 
 Solution 3 is a good alternative to have a little protection with quick result. 1,20 usec per loop, it's 4 times longer than solution 1 and 2 times worst than solution 2.
 

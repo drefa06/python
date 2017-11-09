@@ -2,6 +2,11 @@
 import sys
 import pdb
 import time
+
+################################################################################
+################################################################################
+###    SOLUTION 1
+################################################################################
 ################################################################################
 class foo1_1(object):
     bar1_1   = 1100		#class attribute
@@ -39,11 +44,16 @@ class foo1_1(object):
         foo1_1.__bar4_1+=val
         return foo1_1.__bar4_1
 
+################################################################################
+################################################################################
 class foo1_2(foo1_1):
     None      
 
 ################################################################################
+################################################################################
 def attribute1():
+    print "\n====================================================================="
+    print "===   ATTRIBUTE ACCESS TEST 1:"
     print "Create class instance x111=foo1_1() and x112=foo1_1()"
     x111=foo1_1()
     x112=foo1_1()
@@ -308,8 +318,10 @@ def attribute1():
     except:
         print "==> ERROR"
 
+################################################################################
 def stress1():
-    print "\nSTRESS TEST 1:"
+    print "\n====================================================================="
+    print "===   STRESS TEST 1:"
     start=time.time()
     x11=foo1_1()
     x12=foo1_2()
@@ -361,6 +373,10 @@ def stress1():
     print "x12.inc1_bar4_1, duration = ",duration
 
 
+################################################################################
+################################################################################
+###    SOLUTION 2
+################################################################################
 ################################################################################
 class foo2_1:
     bar1   = 1100		#class attribute
@@ -445,9 +461,11 @@ class foo2_1:
     def inc_bar4_1(self,val):    self.set_bar4_1(self.get_bar4_1()+val)
     def inc_bar4_2(self,val):    self.bar4_2+=val
 
+################################################################################
 class foo2_2(foo2_1):
     None
 
+################################################################################
 class class_A(object):
     bar1_1   = 0		#class attribute
     __bar2_1 = []		#"private" class attribute
@@ -465,7 +483,10 @@ class class_A(object):
     def del__bar2_1(self):       del self.__bar2_1
 
 ################################################################################
+################################################################################
 def attribute2():
+    print "\n====================================================================="
+    print "===   ATTRIBUTE ACCESS TEST 2:"
     x21=foo2_1()
     x22=foo2_2()
 
@@ -672,8 +693,10 @@ def attribute2():
     x22.bar4_2=x22.bar4_2+20
     print "bar4-6-  x22.bar4_2=x22.bar4_2+10 => ",x22.bar4_2
 
+################################################################################
 def stress2():
-    print "\nSTRESS TEST 2:"
+    print "\n====================================================================="
+    print "===   STRESS TEST 2:"
     start=time.time()
     x11=foo2_1()
     x12=foo2_2()
@@ -766,6 +789,10 @@ def stress2():
 
 
 ################################################################################
+################################################################################
+###    SOLUTION 3
+################################################################################
+################################################################################
 class foo3_1(object):
     __name__='foo3_1'
 
@@ -844,18 +871,21 @@ class foo3_1(object):
 
 
 
+################################################################################
 class foo3_2(foo3_1):
     __name__='foo3_2'
 
 
 ################################################################################
+################################################################################
 def attribute3():
+    print "\n====================================================================="
+    print "===   ATTRIBUTE ACCESS TEST 3:"
     x31=foo3_1()
 
-    print "1-  x31.get_bar1_1()             =",x31.get_bar1_1()
-    print "2-  x31.get_bar1_2               =",x31.get_bar1_2
-    print "3-  x31.bar1                     =",x31.bar1
-    print "4-  x31._foo3__protected['bar1'] =",x31._foo3_1__protected['bar1']
+    print "1-  x31.get_bar1()                 =",x31.get_bar1()
+    print "3-  x31.bar1                       =",x31.bar1
+    print "4-  x31._foo3_1__protected['bar1'] =",x31._foo3_1__public['bar1']
 
     x31.bar1 *= 2
     print "5-  x31.bar1 * 2                 =",x31.bar1
@@ -867,14 +897,16 @@ def attribute3():
 
 
     x32=foo3_2()
-    print "7-  x32.bar1 (protected)         =",x32.bar1
+    print "7-  x32.bar1 (public)         =",x32.bar1
     try:
         print "8-  x32.bar2 (private)           =",x32.bar2
     except Exception, err:
         print str(err)
 
+################################################################################
 def stress3():
-    print "\nSTRESS TEST 3:"
+    print "\n====================================================================="
+    print "===   STRESS TEST 3:"
     start=time.time()
     x31=foo3_1()
     x32=foo3_2()
@@ -921,7 +953,11 @@ def stress3():
 
        
 ################################################################################
-class _attribute1:
+################################################################################
+###    SOLUTION 4
+################################################################################
+################################################################################
+class _attribute4:
     __name__= None
     __order = 'public'
     __type = int
@@ -983,7 +1019,7 @@ class foo4_1(object):
 
     def __attributeValue(self, operation,attrName,newValue=None):
         if operation == 'new': 
-            attr=_attribute1(attrName,newValue)
+            attr=_attribute4(attrName,newValue)
             self.__set__attribute(attrName,attr)
 
         elif operation == 'del':
@@ -1042,6 +1078,7 @@ class foo4_2(foo4_1):
     def inc_bar4(self,val): self.bar4+=val
 
 
+################################################################################
 class foo4_3(foo4_2):
     __name__='foo4_3'
 
@@ -1061,6 +1098,7 @@ class foo4_3(foo4_2):
     @bar7.setter
     def bar7(self,val): self.set_attributeValue('bar7',val)
 
+################################################################################
 class foo4_4(foo4_1):
     __name__='foo4_4'
 
@@ -1080,6 +1118,7 @@ class foo4_4(foo4_1):
     @bar8.setter
     def bar8(self,val): self.set_attributeValue('bar8',val)
 
+################################################################################
 class foo4_5(foo4_3,foo4_4):
     __name__='foo4_5'
 
@@ -1095,17 +1134,19 @@ class foo4_5(foo4_3,foo4_4):
     def bar9(self,val): self.set_attributeValue('bar9',val)
 
 ################################################################################
+################################################################################
 def attribute4():
-    pdb.set_trace()
+    print "\n====================================================================="
+    print "===   ATTRIBUTE ACCESS TEST 4:"
     x41=foo4_1()
     x42=foo4_2()
 
     x45=foo4_5()
-    pdb.set_trace()
+
     print "1-  read x41.bar1 =",x41.bar1
     print "    read x41.bar3 =",x41.bar3
     print "    set x41.bar1 = 10"
-    pdb.set_trace()
+
     x41.bar1 = 10
     print "    => x41.bar1 =",x41.bar1
     print "    set x41.bar3 = 30"
@@ -1189,8 +1230,10 @@ def attribute4():
     print x42.__dict__
     print x45.__dict__
 
+################################################################################
 def stress4():
-    print "\nSTRESS TEST 4:"
+    print "\n====================================================================="
+    print "===   STRESS TEST 4:"
     start=time.time()
     x41=foo4_1()
     x42=foo4_2()
@@ -1227,9 +1270,13 @@ def stress4():
 
 
 ################################################################################
+################################################################################
+###    SOLUTION 5
+################################################################################
+################################################################################
 import re
 
-class _attribute:
+class _attribute5:
     __name__  = None
     __type    = int
     __value   = None
@@ -1245,11 +1292,11 @@ class _attribute:
 
     @property
     def value(self): return self.__value
-    #@value.setter
-    #def value(self,val):
-    #    if not isinstance(val,self.__type):
-    #        raise TypeError("Incorrect type %s it must be %s " % (self.__name__,str(self.__type))) 
-    #    self.__value = val
+    @value.setter
+    def value(self,val):
+        if not isinstance(val,self.__type):
+            raise TypeError("Incorrect type %s it must be %s " % (self.__name__,str(self.__type))) 
+        self.__value = val
 
     @property
     def private(self): return self.__private    #readonly parameter
@@ -1259,18 +1306,29 @@ class _attribute:
     def type(self):    return self.__type       #readonly parameter
   
 
+################################################################################
 class attribute_ctrl:
-    attribute_accessor = ['has_','get_','set_','setItems_','rst_','getDefault_','chkEq_','chkType_']
+    __attribute_accessor = ['has_','get_','set_','setItems_','rst_','getDefault_','chkEq_','chkType_']
 
     def __init__(self):
         self.__my_attribute=dict()
+
+    def __getattr__(self,attr):
+        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
+        
+        if my_accessor in self.__attribute_accessor and attr.startswith(my_accessor):
+            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
+            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
+
+        else:
+            raise AttributeError("Undefined attribute "+attr)
 
     #Attribute creation/deletion
     def new__attribute(self,attrName,attrValue):
         if self.__my_attribute.has_key(attrName):
             raise AttributeError("Cannot recreate an existing attribute: %s" % (attrName,))
         
-        attr=_attribute(attrName,attrValue)
+        attr=_attribute5(attrName,attrValue)
         self.__my_attribute[attrName]=attr
 
         #setattr(self, attrName, attr.default)
@@ -1325,7 +1383,17 @@ class attribute_ctrl:
         return  self.__my_attribute[attrName].value == args[0]
 
     def _checkType__attribute(self,attrName,args):
-        return  self.__my_attribute[attrName].type == args[0]
+        myTypeIsGood=False
+        if isinstance(self.__my_attribute[attrName].type,list):
+            for t in self.__my_attribute[attrName].type:
+                if isinstance(args[0],t): 
+                    myTypeIsGood = True
+                    break
+                
+        elif isinstance(args[0],self.__my_attribute[attrName].type):
+            myTypeIsGood = True
+
+        return  myTypeIsGood
 
 
     def _attribute_accessor_execute(self,accessor,attrName, *args):
@@ -1343,6 +1411,13 @@ class attribute_ctrl:
             elif accessor.startswith('chkType_'):    return self._chkType__attribute(attrName, args=list(args))
             else:
                 raise AttributeError(attrName)
+
+    def get__attrName(self,attrName,*args):           return self._attribute_accessor_execute('get_',attrName, *args)
+    def set__attrName(self,attrName,attrValue,*args): self._attribute_accessor_execute('set_',attrName, attrValue, *args)
+    def rst__attrName(self,attrName,*args):           return self._attribute_accessor_execute('rst_',attrName, *args)
+    def getDefault__attrName(self,attrName,*args):    return self._attribute_accessor_execute('getDefault_',attrName, *args)
+    def chkEq__attrName(self,attrName,*args):         return self._attribute_accessor_execute('chkEq_',attrName, *args)
+    def chkType__attrName(self,attrName,*args):       return self._attribute_accessor_execute('chkType_',attrName, *args)
 
 
     def __extractItems(self,value,args):
@@ -1373,37 +1448,26 @@ class attribute_ctrl:
        
 
 
+################################################################################
 class foo5_1(attribute_ctrl):
     __name__='foo5_1'
-    __attr_init=False
 
     def __init__(self):
-        # to be sure to create dictionnary only once
-        if not self.__attr_init:
-            #self.__my_attribute=dict()
-            attribute_ctrl.__init__(self)
-            self.__attr_init = True
+        attribute_ctrl.__init__(self)
 
         # create attribute bar1 and bar3 that can be called via accessor
         self.new__attribute('bar1',{'private':False,   'type':[int,long], 'value':0})
-        self.new__attribute('bar2',{'private':self.__name__,'type':[int,long],  'value':100})
+        self.new__attribute('bar2',{'private':'foo5_1','type':[int,long],  'value':100})
         self.new__attribute('bar3',{'private':'foo5_1','type':list, 'value':[]})
 
-    def __getattr__(self,attr):
-        my_accessor = re.split('__',attr)[0]+'_'		#'__' for debug, '_' unless
-        
-        if my_accessor in self.attribute_accessor and attr.startswith(my_accessor):
-            attrName =re.sub(r'^'+my_accessor+'_','',attr)	#r'^'+cmd+'_' for debug, r'^'+cmd unless
-            return lambda *x: self._attribute_accessor_execute(my_accessor,attrName,*x)
-
-        else:
-            raise AttributeError("Undefined attribute "+attr)
-
+    def get__bar1(self,*args):       return self.get__attrName('bar1',*args)
+    def set__bar1(self,value,*args): self.set__attrName('bar1',value,*args)
 
     def inc_bar1(self,val): self.set__bar1(self.get__bar1() + val)
     def inc_bar2(self,val): self.set__bar2(self.get__bar2() + val)
 
 
+################################################################################
 class foo5_2(attribute_ctrl,foo5_1):
     __name__='foo5_2'
 
@@ -1419,7 +1483,10 @@ class foo5_2(attribute_ctrl,foo5_1):
 
 
 ################################################################################
+################################################################################
 def attribute5():
+    print "\n====================================================================="
+    print "===   ATTRIBUTE ACCESS TEST 5:"
     x51=foo5_1()
     x52=foo5_2()
 
@@ -1485,8 +1552,10 @@ def attribute5():
     print x52.__dict__
 
 
+################################################################################
 def stress5():
-    print "\nSTRESS TEST 5:"
+    print "\n====================================================================="
+    print "===   STRESS TEST 5:"
     start=time.time()
     x51=foo5_1()
     x52=foo5_2()
@@ -1518,16 +1587,20 @@ def stress5():
 
 
 ################################################################################
+################################################################################
+###    MAIN
+################################################################################
+################################################################################
 def main(args):
-    #attribute1()
+    attribute1()
+    attribute2()
+    attribute3()
+    attribute4()
+    attribute5()
     stress1()
-    #attribute2()
     stress2()
-    #attribute3()
     stress3()
-    #attribute4()
     stress4()
-    #attribute5()
     stress5()
 
 
