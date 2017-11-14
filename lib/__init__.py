@@ -7,6 +7,17 @@ class myError(Exception):
         self._message = message
     message = property(_get_message, _set_message)
  
+#def set_lib_package_path():
+#    import sys, os
+#    sys.path.append(os.path.dirname(sys.argv[0]) + "/..")
+
+#try:
+#    import lib
+#except:
+#    set_lib_package_path()
+
+#import lib
+
 __all__ = [
     # - Package symbols (i.e. defined into this file)
     "iceraError",
@@ -14,6 +25,7 @@ __all__ = [
 
     # - Package modules (i.e. files named *.py contained into this package directory)
     "attribute",
+    "superTypes",
     
 
     # - Sub-packages (i.e. sub-directories containing other packages)

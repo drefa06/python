@@ -2,6 +2,9 @@
 import pdb
 import sys, time, copy, re
 
+import superTypes
+from superTypes import *
+
 class _attribute:
     __name__  = None
     __type    = int
@@ -12,7 +15,10 @@ class _attribute:
     def __init__(self,name,val):
         self.__name__  = name
         self.__type    = val['type']
-        self.__value   = val['value']
+        if isinstance(self.__type,list):
+            self.__value   = val['value']
+        else:
+            self.__value = self.__type(val['value'])
         self.__private = val['private']
         self.__default = val['value']
 
@@ -83,18 +89,7 @@ class attribute_ctrl:
 
             self.__my_attribute[attrName].value=newValue
         else:
-            myTypeIsGood=False
-            if isinstance(self.__my_attribute[attrName].type,list):
-                
-                for t in self.__my_attribute[attrName].type:
-                    if isinstance(args[0],t): 
-                        myTypeIsGood = True
-                        break
-                
-            elif isinstance(args[0],self.__my_attribute[attrName].type):
-                myTypeIsGood = True
-
-            if not myTypeIsGood:
+            if not self._checkType__attribute(attrName,[args[0]]):
                 raise TypeError("%s: Incorrect type %s it must be %s " % (args[0],str(type(args[0])),str(self.__my_attribute[attrName].type))) 
 
             self.__my_attribute[attrName].value=args[0]
@@ -124,6 +119,14 @@ class attribute_ctrl:
                 
         elif isinstance(args[0],self.__my_attribute[attrName].type):
             myTypeIsGood = True
+
+        else:
+            try:
+                a=self.__my_attribute[attrName].type(args[0])
+                myTypeIsGood = True
+            except TypeError, err:
+                pass
+            
 
         return  myTypeIsGood
 
@@ -213,9 +216,11 @@ class foo1_2(attribute_ctrl):
     def __init__(self):
         attribute_ctrl.__init__(self)
 
-        self.new__attribute('bar1',{'private':False,   'type':[int,long], 'value':0})
-        self.new__attribute('bar2',{'private':'foo1_2','type':[int,long],  'value':100})
-        self.new__attribute('bar3',{'private':'foo1_2','type':list, 'value':[]})
+        self.new__attribute('bar1',{'private':False,   'type':istr,       'value':'0'})
+        self.new__attribute('bar2',{'private':'foo1_2','type':[int,long], 'value':100})
+        self.new__attribute('bar3',{'private':'foo1_2','type':islist,     'value':['0']})
+        self.new__attribute('bar4',{'private':'foo1_2','type':dictA,     'value':{'a':['fabrice','aurelie'],'b':'123','c':['45','38']}})
+        self.new__attribute('bar5',{'private':'foo1_2','type':make_dictType(elemType=typedictA),     'value':{'a':['fabrice','aurelie'],'b':'123','c':['45','38']}})
 
     def get__bar1(self,*args):       return self.get__attrName('bar1',*args)
     def set__bar1(self,value,*args): self.set__attrName('bar1',value,*args)
@@ -223,11 +228,20 @@ class foo1_2(attribute_ctrl):
     def set__bar2(self,value,*args): self.set__attrName('bar2',value,*args)
     def get__bar3(self,*args):       return self.get__attrName('bar3',*args)
     def set__bar3(self,value,*args): self.set__attrName('bar3',value,*args)
+    def get__bar4(self,*args):       return self.get__attrName('bar4',*args)
+    def set__bar4(self,value,*args): self.set__attrName('bar4',value,*args)
+    def get__bar5(self,*args):       return self.get__attrName('bar5',*args)
+    def set__bar5(self,value,*args): self.set__attrName('bar5',value,*args)
 
     def inc_bar1(self,val):
-        self.set__bar1(self.get__bar1()+val)
+        self.set__bar1(str(int(self.get__bar1())+val))
     def inc_bar2(self,val):
         self.set__bar2(self.get__bar2()+val)
+    def inc_bar3(self,val):
+        a=self.get__bar3()
+        for i in range(len(a)): a[i]=str(int(a[i])+val)
+        self.set__bar3(a)
+
 
 ##########################################################################################
 class foo2(foo1_1):
@@ -323,6 +337,35 @@ def attribute_test():
     x1.rst__bar3()
     print x1.get__bar3()
 
+    x12=foo1_2()
+    print "1-  read x12.bar1 =",x12.get__bar1()
+    print "    read x12.bar2 =",x12.get__bar2()
+    print "    read x12.bar3 =",x12.get__bar3()
+    print "    set x12.bar1 = '10'"
+    x12.set__bar1('10')
+    print "    => x12.bar1 =",x12.get__bar1()
+    print "    set x12.bar2 = 1000"
+    x12.set__bar2(1000)
+    print "    => x12.bar2 =",x12.get__bar2()
+    print "    set x12.bar3 = ['1', '12', '123']"
+    x12.set__bar3(['1', '12', '123'])
+    print "    => x12.bar3 =",x12.get__bar3()
+    x12.inc_bar1(10)
+    x12.inc_bar2(200)
+    x12.inc_bar3(3000)
+    print "    => x12.bar1 =",x12.get__bar1()
+    print "    => x12.bar2 =",x12.get__bar2()
+    print "    => x12.bar3 =",x12.get__bar3()
+    print "2-  read x12.bar4 =",x12.get__bar4()
+    print "    read x12.bar5 =",x12.get__bar5()
+    print "    set x12.bar4 = '10'"
+    x12.set__bar4('46',['c',0])
+    print "    => x12.bar4 =",x12.get__bar4()
+    print "    set x12.bar5 = '10'"
+    x12.set__bar5('39',['c',1])
+    print "    => x12.bar5 =",x12.get__bar5()
+
+
     
     print "x1 = ",x1.__dict__
     print "x2 = ",x2.__dict__
@@ -332,6 +375,7 @@ def stress_test():
     print "\nSTRESS TEST:"
     start=time.time()
     x11=foo1_1()
+    x12=foo1_2()
     x2=foo2()
     duration=time.time()-start
     print "duration = ",duration*1000000,"us"
@@ -341,6 +385,11 @@ def stress_test():
     for i in range(1000000): x11.inc_bar1(i)
     duration=time.time()-start
     print "x11.inc_bar1, duration = ",duration
+    start=time.time()
+    x12.set__bar1('1000')
+    for i in range(1000000): x12.inc_bar1(i)
+    duration=time.time()-start
+    print "x12.inc_bar1, duration = ",duration
 
     start=time.time()
     x2.set__bar1(1000)
