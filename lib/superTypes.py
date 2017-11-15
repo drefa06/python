@@ -3,26 +3,58 @@ import pdb
 import re
 
 ################################################################################
+#class superType(type):
+#     def __init__(self,inVal,inType=None):
+#         if not inType:
+#             self.__type = type(inVal)
+#         else:
+#             self.__type = inType
+#
+#         self.__val = self.__type(inVal)
+#        
+#     def __call__(self):
+#         pdb.set_trace()
+#
+#     @property
+#     def val(self): return self.__val
+#     @val.setter
+#     def val(self,inVal):
+#         self.__val = self.__type(inVal)
+#
+#     def isType(self,inType):
+#         return isinstance(self.__val,inType)
+#
+################################################################################
 class superStr(str):
+    def __init__(self,inStr=''):
+        str.__init__(self,self.chkType(inStr))
+
     def chkType(self,inStr):
         if not isinstance(inStr,str): 
-            raise TypeError("Element %s is not a string" % (inValue))
+            raise TypeError("Element %s is not a string" % (inStr))
+        self.chkTypeElem(inStr)
+        return inStr
         
             
 class istr(superStr):
-    def __init__(self,inStr=''):
-        self.chkType(inStr)
-        self.chkTypeElem(inStr)
-        str.__init__(self,inStr)
+    elemType=str
+    def __add__(self,inValue): return istr(str(int(self)+int(self.chkType(inValue))))
+    def __sub__(self,inValue): return istr(str(int(self)-int(self.chkType(inValue))))
+    def __mul__(self,inValue): return istr(str(int(self)*int(self.chkType(inValue))))
+    def __div__(self,inValue): return istr(str(int(self)/int(self.chkType(inValue))))
+    def __mod__(self,inValue): return istr(str(int(self)%int(self.chkType(inValue))))
 
-    def __add__(self,inValue):
-        self.chkType(inValue)
-        return istr(str(int(self)+int(inValue)))
+    def __lt__(self,inValue): return int(self) <  int(self.chkType(inValue))
+    def __le__(self,inValue): return int(self) <= int(self.chkType(inValue))
+    def __eq__(self,inValue): return int(self) == int(self.chkType(inValue))
+    def __ne__(self,inValue): return int(self) != int(self.chkType(inValue))
+    def __ge__(self,inValue): return int(self) >= int(self.chkType(inValue))
+    def __gt__(self,inValue): return int(self) >  int(self.chkType(inValue))
 
     def chkTypeElem(self,inValue):
         if not inValue.isdigit():
             raise TypeError("Element in '%s' is not a string of integer" % (inValue))
-
+        return inValue
 
 ################################################################################
 class superList(list):
@@ -31,26 +63,29 @@ class superList(list):
 
         for i in range(len(inList)):
             inList[i]=self.elemType(inList[i])
+            self.chkTypeElem(inList[i])
 
-        for elem in inList:
-            self.chkTypeElem(elem)
         list.__init__(self,inList)
 
     def chkType(self,inValue):
         if not isinstance(inValue,list): 
             raise TypeError("Element %s is not a list" % (inValue))
+        return inValue
+
     def chkTypeElem(self,inValue):
         if not isinstance(inValue,self.elemType):
-            raise TypeError("Element in '%s' is not type %" % (str(self.elemType)))
+            raise TypeError("Element of list '%s' is not type %s" % (inValue, str(self.elemType)))
+        return inValue
 
     def __setitem__(self,pos,inElem):
         list.__setitem__(self,pos,self.elemType(inElem))
 
     def __setslice__(self,startPos,endPos,inList=[]):
         if len(inList)>0:
+            self.chkType(inList)
             newList=[]
-            for l in inList:
-                newList.append(self.elemType(l))
+            for elem in inList:
+                newList.append(self.elemType(elem))
             list.__setslice__(self,startPos,endPos,newList)
 
     def append(self,inElem):
@@ -58,34 +93,12 @@ class superList(list):
 
     def extend(self,inList):
         if len(inList)>0:
-            newList=[]
-            for l in inList:
-                newList.append(self.elemType(l))
-            list.extend(self,newList)
+            self.chkType(inList)
+            for elem in inList:
+                self.append(elem)
 
     def insert(self,pos,inElem):
         list.insert(self,pos,self.elemType(inElem))
-
-
-#class ilist(superList): 
-#    elemType=int
-
-#class slist(superList):
-#    elemType=str
-
-#class dlist(superList):
-#    elemType=dict
-
-#class llist(superList):
-#    elemType=list
-
-#class islist(slist):
-#    elemType=istr
-
-    #def __init__(self,inList=[]):
-    #    for i in range(len(inList)):
-    #        inList[i]=istr(inList[i])   
-    #    slist.__init__(self,inList)
 
 def make_listType(fatherType,**kw): return type('superList',(fatherType,),dict(**kw))
 
@@ -101,28 +114,34 @@ class superDict(dict):
     elemType=None
     def __init__(self,inDict={},inType=None):
         if inType != None: self.elemType=inType
+        self.chkType(inDict)
 
-        for key,elem in inDict.items():
+        for key,typ in self.elemType.items():
+            if not inDict.has_key(key): 
+                raise TypeError("missing key %s in dict '%s'" % (key,inDict))
+
             if isinstance(self.elemType[key],type):
                 inDict[key]=self.elemType[key](inDict[key])
             else:
                 inDict[key]=superDict(inDict[key],self.elemType[key])
 
-        self.chkType(inDict)
-        for key,elem in inDict.items():
-            self.chkTypeElem(elem,self.elemType[key])
-
+            self.chkTypeElem(inDict[key],self.elemType[key])
+            
         dict.__init__(self,inDict)
 
     def chkType(self,inValue):
         if not isinstance(inValue,dict): 
             raise TypeError("Element %s is not a dict" % (inValue))
+
     def chkTypeElem(self,inValue,inType):
         if isinstance(inType,type):
             if not isinstance(inValue,inType):
-                raise TypeError("Element in '%s' is not type %" % (str(self.elemType)))
+                raise TypeError("Element of dict '%s' is not type %s" % (inValue,str(inType)))
         elif isinstance(inType,dict):
+            self.chkType(inValue)
             for k,v in inType.items():
+                if not inValue.has_key(k): 
+                    raise TypeError("missing key %s in dict '%s'" % (k,inValue))
                 self.chkTypeElem(inValue[k],v)
         else:
             pdb.set_trace()
@@ -138,184 +157,66 @@ class superDict(dict):
             dict.__setitem__(self,key,inElem)
 
 
-#a minima typedict need to be defined, it will be the element to check, not necessary to declare all keys
-typedictA={
-    'a': slist,
-    'b': istr,
-    'c': list
-    }
-typedictB={
-    'a': dict,
-    'b': islist,
-    'c': typedictA
-    }
-#class dictA(superDict):  elemType=typedictA
-#class dictB(superDict):  elemType=typedictB
-
-def make_dictType(**kw): return type('superDict',(superDict,),dict(**kw))
-#
-dictA = make_dictClass(elemType=typedictA)
-dictB = make_dictClass(elemType=typedictB)
+def make_dictType(name,**kw):  return type(name,(superDict,),dict(**kw))
 
 
-print "New istr based on str"
-print "S1=istr(123)"
-try:                   S1=istr(123)
-except Exception,err:  print str(err)
-print "S1=istr('abc')"
-try:                   S1=istr('abc')
-except Exception,err:  print str(err)
-print "S1=istr('123')"
-S1=istr('123')
+################################################################################
+def assertIfTypeWrong(inputValues,inputTypes): 
+    inputErr = chkTypes(inputValues,inputTypes)
+    
+    if inputErr != "":
+        inputErr=inputErr.rstrip('\n')
+        raise TypeError, "\n" + inputErr
+        
+def chkTypes(inValues,inTypes): 
+    inputErr=""
+    #test each element in inputList
+    for i in range(len(inValues)):
+        inputErr += chkTypesValue(inValues[i],inTypes[i])
 
-print "S1+=456"
-try:                   S1+=456
-except Exception,err:  print str(err)
-print "S1+='abc'"
-try:                   S1+='abc'
-except Exception,err:  print str(err)
-print "S1+='456'"
-S1+='456'
-print "S1 = ",S1
-print "type(S1) = ",type(S1)
-print "isinstance(S1,istr)",isinstance(S1,istr)
-print "isinstance(S1,str)",isinstance(S1,str)
-print "isinstance(S1,int)",isinstance(S1,int)
+    return inputErr
 
+def chkTypesValue(inValue,inTypes): 
+        #pdb.set_trace()
+        #inputType is a list of types to apply to element in inputList
+        #types can be a list of possible case e.g. [[],slist]
+        if not isinstance(inTypes,list): inTypes = [inTypes]
 
-print "New islist based on list"
-L1=islist(['123','456'])
-print "L1 = ",L1
-print "L1.append(789)"
-try:                   L1.append(789)
-except Exception,err:  print str(err)
-print "L1.append('abc')"
-try:                   L1.append('abc')
-except Exception,err:  print str(err)
-print "L1.append('789')"
-L1.append('789')
-print "L1 = ",L1
-print "L1.extend(['101112',131415])"
-try:                   L1.extend(['101112',131415])
-except Exception,err:  print str(err)
-print "L1.extend(['101112','abc'])"
-try:                   L1.extend(['101112','abc'])
-except Exception,err:  print str(err)
-print "L1.extend(['101112','131415'])"
-L1.extend(['101112','131415'])
-print "L1 = ",L1
-print "L1[2]=789789"
-try:                   L1[2]=789789
-except Exception, err: print str(err)
-print "L1[2]='abc'"
-try:                   L1[2]='abc'
-except Exception, err: print str(err)
-print "L1[2]='789789'"
-L1[2]='789789'
-print "L1 = ",L1
-print "L1[1:3]=['1', 'deux', 3]"
-try:                   L1[1:3]=['1', 'deux', 3]
-except Exception, err: print str(err)
-print "L1[1:3]=['1', '2', '3']"
-L1[1:3]=['1', '2', '3']
-print "L1 = ",L1
-print "L1.insert(2,789789)"
-try:                   L1.insert(2,789789)
-except Exception, err: print str(err)
-print "L1.insert(2,'abc')"
-try:                   L1.insert(2,'abc')
-except Exception, err: print str(err)
-print "L1.insert(2,'789789')"
-L1.insert(2,'789789')
-print "L1 = ",L1
-print "type(L1) = ",type(L1)
-for i in range(len(L1)):
-    print "type(L1[",i,"]) = ",type(L1[i])
-print "isinstance(L1,list)",isinstance(L1,list)
-print "isinstance(L1,slist)",isinstance(L1,slist)
-for i in range(len(L1)):
-    print "isinstance(L1[",i,"],int)",isinstance(L1[i],int)
-    print "isinstance(L1[",i,"],str)",isinstance(L1[i],str)
-    print "isinstance(L1[",i,"],istr)",isinstance(L1[i],istr)
+        #test each possible type for each element.
+        typeErr = ""
+        for t in inTypes:
+            error=False
 
-try: 
-    D1=dictA({'a':'123', 'b':'123','c': [1, 'a']})
-except Exception,err:
-    print str(err)
-try: 
-    D1=dictA({'a':['a', '1'], 'b':'abc','c': [1, 'a']})
-except Exception,err:
-    print str(err)
-try: 
-    D1=dictA({'a':['a', '1'], 'b':'123','c': 1})
-except Exception,err:
-    print str(err)
-D1=dictA({'a':['a', '1'], 'b':'123','c': [1, 'a']})
-print "D1 = ",D1
+            #clasic type or class
+            if isinstance(t,type) or str(type(t))=="<type 'classobj'>":
+                if not isinstance(inValue,t):
+                    error = True
+                else:
+                    typeErr = "" 
+                    break
+            #test value
+            else:
+                if inValue != t:
+                    error = True
+                else: 
+                    typeErr = ""
+                    break
+                
+            if error:
+                #reduce size of arg if too long
+                if len(str(inValue)) > 100: 
+                        buffer_inputList = str(inValue)[:100] + "..."
+                else:
+                        buffer_inputList = str(inValue)
 
-D1['a'].append(3)
-print "D1 = ",D1
-D1['a'].append('trois')
-print "D1 = ",D1
-try:
-    D1['b']='abc'
-except Exception,err:
-    print str(err)
-D1['b']='456'
-print "D1 = ",D1
-D1['c'][1]='4'
-print "D1 = ",D1
+                if len(inTypes) == 1: 
+                    buffer_inputType = str(inTypes[0])
+                else:
+                    buffer_inputType = str(inTypes[0])
+                    for i in range(1,len(inTypes)):
+                        buffer_inputType += " or "+str(inTypes[0])
+                typeErr+=" arg = "+ buffer_inputList+ ", expected " + buffer_inputType + "\n"
 
-D2=dictB({'a':{'aa': 1,'ab':6}, 'b': ['1','2'], 'c': {'a':['a', '1'], 'b':'123','c': [1, 'a']}})
+        return typeErr
 
-try:                   D2['b']='abc'
-except Exception,err:  print str(err)
-D2['b']=['1','2','3']
-print "D2 = ",D2
-
-try:                   D2['c']['a'].append(3)
-except Exception,err:  print str(err)
-D2['c']['a'].append('3')
-print "D2 = ",D2
-
-D2['c']['cd']=5
-print "D2 = ",D2
-
-D2['e']=5
-print "D2 = ",D2
-print "type(D2) = ",type(D2)
-
-for k,v in D2.items():
-    print "type(",k,") = ",type(v)
-print "isinstance(D2,dict)",isinstance(D2,dict)
-print "isinstance(D2,dictB)",isinstance(D2,dictB)
-for k,v in D2.items():
-    print "isinstance(D2['",k,"']=",v,",dict)",isinstance(v,dict)
-    print "isinstance(D2['",k,"']=",v,",list)",isinstance(v,list)
-    print "isinstance(D2['",k,"']=",v,",istr)",isinstance(v,istr)
-    print "isinstance(D2['",k,"']=",v,",slist)",isinstance(v,slist)
-    print "isinstance(D2['",k,"']=",v,",islist)",isinstance(v,islist)
-
-dictC=make_dictType(elemType=typedictA)
-D3=dictC({'a':['a', '1'], 'b':'123','c': [1, 'a']})
-print "D3 = ",D3
-
-D3['a'].append(3)
-print "D3 = ",D3
-
-print "type(dictC) = ",type(dictC)
-print "type(D3) = ",type(D3)
-
-for k,v in D3.items():
-    print "type(",k,") = ",type(v)
-print "isinstance(D3,dict)",isinstance(D3,dict)
-print "isinstance(D3,dictC)",isinstance(D3,dictC)
-print "isinstance(D3,superDict)",isinstance(D3,superDict)
-
-for k,v in D3.items():
-    print "isinstance(D3['",k,"']=",v,",dict)",isinstance(v,dict)
-    print "isinstance(D3['",k,"']=",v,",list)",isinstance(v,list)
-    print "isinstance(D3['",k,"']=",v,",istr)",isinstance(v,istr)
-    print "isinstance(D3['",k,"']=",v,",slist)",isinstance(v,slist)
-    print "isinstance(D3['",k,"']=",v,",islist)",isinstance(v,islist)
 
