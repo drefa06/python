@@ -371,7 +371,6 @@ class test_superTypes(unittest.TestCase):
         self.assertTrue(isinstance(e['c']['c'],list))
 
 
-
     #=====================================================
     def test_05_assertIfTypeWrong(self):
         from lib.superTypes import *
@@ -400,7 +399,24 @@ class test_superTypes(unittest.TestCase):
         assertIfTypeWrong([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB])
         self.assertRaises(TypeError, assertIfTypeWrong, [b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB])
 
+        print "Performence test:"
+        print "assertIfTypeWrong success (x1000000)"
+        start=time.time()
+        for i in range(1000000):
+            assertIfTypeWrong([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB])
+        duration=time.time()-start
+        print "    => duration = ",duration
 
+        print "assertIfTypeWrong fails (x1000000)"
+        start=time.time()
+        for i in range(1000000):
+            try: 
+                assertIfTypeWrong([b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB])
+            except Exception, err:
+                if i == 0:
+                    print str(err)
+        duration=time.time()-start
+        print "    => duration = ",duration
 
 
 ##
