@@ -13,61 +13,6 @@ import pdb, os, re, sys, os.path, shutil, time
 
 from lib import superTypes
 
-#typeDict1={ 'truc':   lib.superTypes.hlist, \
-#            'machin': lib.superTypes.bin,\
-#            'chose':  int }
-
-#typeDict2 = { 'truc':   lib.superTypes.hlist, \
-#              'machin': lib.superTypes.bin,\
-#              'chose':  int, \
-#              'bidule': typeDict1 }
-
-#dict1 = lib.superTypes.make_dictType(elemType=typeDict1)
-#dict2 = lib.superTypes.make_dictType(elemType=typeDict2)
-
-#d1list = lib.superTypes.make_listType(superList,elemType=dict1)
-#d2list = lib.superTypes.make_listType(superList,elemType=dict2)
-
-
-#class testTypes(customTypes):
-#    DICT1       = DICT1
-#    LISTofDICT1 = LISTofDICT1
-#    DICT2       = DICT2
-#    LISTofDICT2 = LISTofDICT2
-
-#    def getClasses(self):
-#        C_TYPES = []
-#        D_TYPES = vars(testTypes)
-#        for k,v in D_TYPES.items():
-#            if not k in ['__module__','__doc__','getClasses']:
-#                C_TYPES.append(v)
-
-#        C_TYPES.extend(customTypes.getClasses(self))
-
-#        return C_TYPES
-
-#class TestClassA:
-#    def __init__(self,param):
-#        self.__param = param
-
-#class TestClassB:
-#    def __init__(self,param):
-#        self.__param = param
-#        self.__A = TestClassA(param)
-
-#class TestClassC(TestClassA):
-#    def __init__(self,param):
-#        TestClassA.__init__(self,param)
-
-#        self.__param = param
-
-#class TestClassD(TestClassA,TestClassB):
-#    def __init__(self,param):
-#        TestClassA.__init__(self,param)
-#        TestClassB.__init__(self,param)
-
-#        self.__param = param
-
 
 ##############################################################################################
 ##############################################################################################
