@@ -14,6 +14,7 @@ import pdb, os, re, sys, os.path, shutil, time
 from lib import superTypes
 
 
+
 ##############################################################################################
 ##############################################################################################
 ##############################################################################################
@@ -107,7 +108,7 @@ class test_superTypes(unittest.TestCase):
          self.assertTrue(isinstance(a,dict))
          self.assertTrue(isinstance(b,dict))
 
-         lib.superTypes.assertIfTypeWrong([11100,0xFAB,0b11100,0o123,'011100',[011100,'011100'],{0:'0',1:'1',2:'01',3:'11'}],[int,int,int,int,str,list,dict])
+         lib.superTypes.checkTypes([11100,0xFAB,0b11100,0o123,'011100',[011100,'011100'],{0:'0',1:'1',2:'01',3:'11'}],[int,int,int,int,str,list,dict]).assertTypes()
 
 
 
@@ -396,14 +397,14 @@ class test_superTypes(unittest.TestCase):
         e = dictA({'a':['a', '1'], 'b':'123','c': [1, 'a'], 'd': 'test'})
         f = dictB({'a':{'aa': 1,'ab':6}, 'b': ['1','2'], 'c':e})
 
-        assertIfTypeWrong([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB])
-        self.assertRaises(TypeError, assertIfTypeWrong, [b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB])
+        lib.superTypes.checkTypes([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB]).assertTypes()
+        #self.assertRaises(TypeError, assertIfTypeWrong, [b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB])
 
         print "Performence test:"
         print "assertIfTypeWrong success (x1000000)"
         start=time.time()
         for i in range(1000000):
-            assertIfTypeWrong([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB])
+            lib.superTypes.checkTypes([a,b,c,d,e,f],[int,istr,ilist,islist,dictA,dictB]).assertTypes()
         duration=time.time()-start
         print "    => duration = ",duration
 
@@ -411,14 +412,109 @@ class test_superTypes(unittest.TestCase):
         start=time.time()
         for i in range(1000000):
             try: 
-                assertIfTypeWrong([b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB])
+                lib.superTypes.checkTypes([b,f,d,a,e,c],[int,istr,ilist,islist,dictA,dictB]).assertTypes()
             except Exception, err:
                 if i == 0:
                     print str(err)
         duration=time.time()-start
         print "    => duration = ",duration
 
+    #=====================================================
+    def test_05_pickle_performance(self):
+        from lib.superTypes import *
+        import pickle
 
+        B=ilist([1,2,3])
+        A=istr('123')
+        C=slist(['a','2',"trois"])
+        D=dlist([{1:'un', '2':2, 'trois':'3'}])
+        E=llist([[1,2,3],['a','2',"trois"],['1','2','3']])
+        F=islist(['1','2','3'])
+        G=tlist([int,long,dict,list,islist,istr])
+
+        typedictA={
+            'a': slist,
+            'b': istr,
+            'c': list
+            }
+        dictA = make_dictType('dictA',elemType=typedictA)
+        H=dictA({'a':['a', '1'], 'b':'123','c': [1, 'a'], 'd': 'test'})
+        
+        try:
+            with open("data_superTypes_A",'wb') as fichier:
+                pickle.dump(A,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(A)
+            with open("data_superTypes_B",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(B)
+            with open("data_superTypes_C",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(C)
+            with open("data_superTypes_D",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(D)
+            with open("data_superTypes_E",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(E)
+            with open("data_superTypes_F",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(F)
+            with open("data_superTypes_G",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(G)
+            with open("data_superTypes_H",'wb') as fichier:
+                pickle.dump(B,fichier,protocol=pickle.HIGHEST_PROTOCOL)
+                #serialized = pickle.Pickler(fichier)
+                #serialized.dump(H)
+        except Exception, err:
+            print str(err)
+
+        try:
+            with open("data_superTypes_A",'rb') as fichier:
+                new_A = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_B",'rb') as fichier:
+                new_B = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_C",'rb') as fichier:
+                new_C = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_D",'rb') as fichier:
+                new_D = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_E",'rb') as fichier:
+                new_E = pickle.load(fichier)
+                #mon_depickler = pickle.Unpickler(fichier)
+                #new_A = mon_depickler.load()
+                #new_A = pickle.load(fichier)
+            with open("data_superTypes_F",'rb') as fichier:
+                new_F = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_G",'rb') as fichier:
+                new_G = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+            with open("data_superTypes_H",'rb') as fichier:
+                new_H = pickle.load(fichier)
+                #deserialized = pickle.Unpickler(fichier)
+                #new_A = deserialized.load()
+        except Exception, err:
+            print str(err)
+
+
+	
 ##
 # If this module is run as a stand-alone application, call the main() function.
 #

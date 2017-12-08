@@ -61,8 +61,8 @@ class superList(list):
     def __init__(self,inList=[]):
         self.chkType(inList)
 
-        for i in range(len(inList)):
-            inList[i]=self.elemType(inList[i])
+        for i,l in enumerate(inList):
+            inList[i]=self.elemType(l)
             self.chkTypeElem(inList[i])
 
         list.__init__(self,inList)
@@ -100,6 +100,7 @@ class superList(list):
     def insert(self,pos,inElem):
         list.insert(self,pos,self.elemType(inElem))
 
+        
 def make_listType(fatherType,**kw): return type('superList',(fatherType,),dict(**kw))
 
 ilist = make_listType(superList,elemType=int)
@@ -109,6 +110,7 @@ llist = make_listType(superList,elemType=list)
 
 islist = make_listType(slist,elemType=istr)
 
+tlist = make_listType(superList,elemType=type)
 ################################################################################
 class superDict(dict):
     elemType=None
@@ -151,7 +153,6 @@ class superDict(dict):
 
     def __setitem__(self,key,inElem):
         if self.elemType.has_key(key):
-            #pdb.set_trace()
             dict.__setitem__(self,key,self.elemType[key](inElem))
         else:
             dict.__setitem__(self,key,inElem)
@@ -159,64 +160,198 @@ class superDict(dict):
 
 def make_dictType(name,**kw):  return type(name,(superDict,),dict(**kw))
 
+################################################################################
+class dictOrd(dict):
+    def __init__(self,*args,**kwargs):
+        if len(args) == 0:
+            if len(kwargs) == 0:
+                self.__keys=list()
+            else:
+                self.__keys=list(kwargs.keys())
+        elif isinstance(args[0],dict):
+            self.__keys=list(args[0].keys())
+
+        dict.__init__(self,*args,**kwargs)
+
+        self.current = 0
+
+    def __repr__(self):
+        strrepr=list()
+        for i,k in enumerate(self.__keys):
+            strrepr.append("{}:{}".format(k,self[k]))
+
+        return '{'+",".join(strrepr)+'}'
+
+
+    def __delitem__(self,key):
+        dict.__delitem__(self,key)
+        self.__keys.remove(key)
+
+    def __setitem__(self,key,val):
+        dict.__setitem__(self,key,val)
+        if not key in self.__keys:
+            self.__keys.append(key)
+
+    def __iter__(self):
+        return iter(self.__keys)
+
+    #need to redefine it to keep order
+    def keys(self):   return iter(self.__keys)
+    def values(self): return iter([self[k] for k in self.__keys])
+    def items(self):  return zip(self.__keys,[self[k] for k in self.__keys])       
+
+    def sort(self):    self.__keys.sort()
+    def reverse(self): self.__keys.reverse()
+
+    def copy(self):
+        new_dictord=dictord2()
+        for i,k in enumerate(self.__keys):
+            new_dictord[k]=dict.__getitem__(self,k)
+        return new_dictord
+
+    def __add__(self, dico):
+        new_dictord=self.copy()
+
+        for k,v in dico.items():
+            if k in new_dictord:
+                new_dictord[k]=new_dictord[k]+v
+            else:
+                new_dictord[k]=v
+        return new_dictord
+
+
 
 ################################################################################
-def assertIfTypeWrong(inputValues,inputTypes): 
-    inputErr = chkTypes(inputValues,inputTypes)
-    
-    if inputErr != "":
-        inputErr=inputErr.rstrip('\n')
-        raise TypeError, "\n" + inputErr
-        
-def chkTypes(inValues,inTypes): 
-    inputErr=""
-    #test each element in inputList
-    for i in range(len(inValues)):
-        inputErr += chkTypesValue(inValues[i],inTypes[i])
+#class superTypesCheck:
+class checkTypes:
 
-    return inputErr
-
-def chkTypesValue(inValue,inTypes): 
+    def __init__(self,inputValues,inputTypes):
         #pdb.set_trace()
+        self.Values = inputValues
+        self.Types  = inputTypes
+
+        self.Errors = []
+
+    def format_maxstr(self,str_toformat,maxstr=100):
+        if len(str_toformat) > 100: 
+            return str_toformat[:100] + "..."
+        else:
+            return str_toformat
+        
+
+    #def assertIfTypeWrong(self): 
+    def assertTypes(self,inValues=None, inTypes=None): 
+        #pdb.set_trace()
+        if inValues is None: inValues=self.Values
+        if inTypes is None:  inTypes=self.Types
+
+        if not self.areTypes(inValues,inTypes):
+            raise TypeError("\n".join(self.strError()))
+        
+    #def chkTypes(self): 
+    def areTypes(self,inValues=None, inTypes=None):
+        if inValues is None: inValues=self.Values
+        if inTypes is None:  inTypes=self.Types
+
+        errors=[]
+        #test each element in inputList
+        for i,val in enumerate(inValues):
+            error = self.isType(val,inTypes[i])
+            errors.append(error)
+            self.Errors.append({'value':val,'expected':self.Types[i],'result':error})
+
+        if False in errors:
+            return False
+        else:
+            return True
+
+    #def chkTypesValue(self,inVal=None, inTyp=None):
+    def isType(self,inVal=None, inTyp=None):
+        if inVal is None: inVal=self.Values
+        if inTyp is None: inTyp=self.Types
+
         #inputType is a list of types to apply to element in inputList
         #types can be a list of possible case e.g. [[],slist]
-        if not isinstance(inTypes,list): inTypes = [inTypes]
+        if not isinstance(inTyp,list): myTyp = list([inTyp])
+        else:                          myTyp = list(inTyp)
 
         #test each possible type for each element.
-        typeErr = ""
-        for t in inTypes:
-            error=False
+        error={}
+        for i,t in enumerate(myTyp):
+            error[t]=True
 
             #clasic type or class
-            if isinstance(t,type) or str(type(t))=="<type 'classobj'>":
-                if not isinstance(inValue,t):
-                    error = True
-                else:
-                    typeErr = "" 
-                    break
+            if isinstance(t,type):
+                if not isinstance(inVal,t):
+                    if hasattr(t, 'elemType'):
+                        try:    a = t(inVal)
+                        except TypeError, err:
+                            error[t] = False
+                    else:
+                        error[t] = False
             #test value
             else:
-                if inValue != t:
-                    error = True
-                else: 
-                    typeErr = ""
-                    break
+                if inVal != t:
+                    error[t] = False
                 
-            if error:
-                #reduce size of arg if too long
-                if len(str(inValue)) > 100: 
-                        buffer_inputList = str(inValue)[:100] + "..."
-                else:
-                        buffer_inputList = str(inValue)
+        if False in error.values():
+            return False
+        else:
+            return True
 
-                if len(inTypes) == 1: 
-                    buffer_inputType = str(inTypes[0])
-                else:
-                    buffer_inputType = str(inTypes[0])
-                    for i in range(1,len(inTypes)):
-                        buffer_inputType += " or "+str(inTypes[0])
-                typeErr+=" arg = "+ buffer_inputList+ ", expected " + buffer_inputType + "\n"
 
-        return typeErr
+    def strError(self):
+        bufferError = []
+
+        for i,error in enumerate(self.Errors):
+            if not error['result']:
+                bufferError.append("value: {} type expected is {} not {}".format(self.format_maxstr(str(error['value'])),str(error['expected']),type(error['value'])))
+
+        return bufferError
+
+
+
+
+#decorator that check types before calling a function
+def accept_types(*types):
+    def check_accept(fct):
+
+        varNames=list(fct.func_code.co_varnames)
+        #assert len(types) == fct.func_code.co_argcount
+        assert len(types) == len(varNames)
+
+        def new_fct(*args_fct,**kwargs_fct):
+            pdb.set_trace()
+            checkTypes(args_fct,types).assertTypes()
+
+            #errTypes=list()
+            #for (a,t,v) in zip(args_fct,types,varNames):
+            #    if t == None: continue
+
+            #    checkTypes(args_fct,types)
+
+            #    if not isinstance(a,t):
+            #        errTypes.append("{}={} is type {} instead of type {}".format(v,a,type(a),t))
+            #if len(errTypes)>0:
+            #    raise TypeError("\n".join(errTypes))
+
+            return fct(*args_fct,**kwargs_fct)
+        new_fct.func_name = fct.func_name
+        return new_fct
+    return check_accept
+
+def returns_types(rtype):
+    def check_returns(f):
+        def new_f(*args, **kwds):
+            result = f(*args, **kwds)
+            pdb.set_trace()
+            checkTypes(result,rtype).assertTypes()
+
+            #assert isinstance(result, rtype), \
+            #       "return value %r does not match %s" % (result,rtype)
+            return result
+        new_f.func_name = f.func_name
+        return new_f
+    return check_returns
 
 

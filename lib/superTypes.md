@@ -148,13 +148,6 @@ typedictX={
     }
 ```
 
-## meta class ##
-
-TBD
-
-## C creation ##
-
-TBD
 
 
 
