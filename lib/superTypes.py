@@ -226,7 +226,6 @@ class dictOrd(dict):
 class checkTypes:
 
     def __init__(self,inputValues,inputTypes):
-        #pdb.set_trace()
         self.Values = inputValues
         self.Types  = inputTypes
 
@@ -241,12 +240,17 @@ class checkTypes:
 
     #def assertIfTypeWrong(self): 
     def assertTypes(self,inValues=None, inTypes=None): 
-        #pdb.set_trace()
         if inValues is None: inValues=self.Values
         if inTypes is None:  inTypes=self.Types
 
-        if not self.areTypes(inValues,inTypes):
+        if isinstance(inValues,list) and isinstance(inTypes,list):
+            result = self.areTypes(inValues,inTypes)
+        else:
+            result = self.isType(inValues,inTypes)
+
+        if not result:
             raise TypeError("\n".join(self.strError()))
+ 
         
     #def chkTypes(self): 
     def areTypes(self,inValues=None, inTypes=None):
@@ -256,9 +260,8 @@ class checkTypes:
         errors=[]
         #test each element in inputList
         for i,val in enumerate(inValues):
-            error = self.isType(val,inTypes[i])
-            errors.append(error)
-            self.Errors.append({'value':val,'expected':self.Types[i],'result':error})
+            if inTypes[i] is None: continue
+            errors.append(self.isType(val,inTypes[i]))
 
         if False in errors:
             return False
@@ -282,7 +285,9 @@ class checkTypes:
 
             #clasic type or class
             if isinstance(t,type):
-                if not isinstance(inVal,t):
+                if isinstance(inVal,t):
+                    break
+                else:
                     if hasattr(t, 'elemType'):
                         try:    a = t(inVal)
                         except TypeError, err:
@@ -294,11 +299,14 @@ class checkTypes:
                 if inVal != t:
                     error[t] = False
                 
-        if False in error.values():
-            return False
-        else:
-            return True
 
+        if False in error.values():
+            result = False
+        else:
+            result = True
+
+        self.Errors.append({'value':inVal,'expected':inTyp,'result':error})
+        return result
 
     def strError(self):
         bufferError = []
@@ -321,8 +329,7 @@ def accept_types(*types):
         assert len(types) == len(varNames)
 
         def new_fct(*args_fct,**kwargs_fct):
-            pdb.set_trace()
-            checkTypes(args_fct,types).assertTypes()
+            checkTypes(list(args_fct),list(types)).assertTypes()
 
             #errTypes=list()
             #for (a,t,v) in zip(args_fct,types,varNames):
