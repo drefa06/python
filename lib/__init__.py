@@ -1,4 +1,4 @@
-__version__ = "0.1"
+__version__ = "0.2"
 
 class myError(Exception):
     def _get_message(self): 
@@ -26,9 +26,12 @@ __all__ = [
     # - Package modules (i.e. files named *.py contained into this package directory)
     "attribute",
     "superTypes",
+    "instanceNbr",
+    "input",
     
 
     # - Sub-packages (i.e. sub-directories containing other packages)
+    "timeout_decorator",
 ]
 
 if __name__ == "__main__":
