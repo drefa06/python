@@ -1,0 +1,26 @@
+[Data]
+player=P3
+map_0=_______________O
+      ______________OOO
+      ______________OEO
+      ______________O/O
+      _____________O   O
+      _____________OO OO
+      _____________O O O
+      ____________O O O O
+      ____________OO O OO
+      ____________O O O O
+      ___________O O O O O
+      ___________OOO O OOO
+      _________OOOOO/O/OOOOO
+      _________O     O     O
+      _________OOOOOO_OOOOOO
+      ________O    O___O    O
+      _______O    O_____O    O
+      ____OOOOOOOOOOOOOOOOOOOOOOO
+      ____O      O       O      O
+      ____OOO.OOOOOOOOOOOOOOO.OOO
+      ___O     O___________O     O
+      __O     O_____________O     O
+      _O  P  O_______________O  P  O
+      OOOOOOO_________________OOOOOOO

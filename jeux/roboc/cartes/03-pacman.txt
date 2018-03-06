@@ -1,0 +1,23 @@
+[Data]
+player=random
+map_0=OOOOOOOOOOOOOOOOOOO
+      O        O        O
+      O OO OOO O OOO OO O
+      O                 O
+      O OO O OOOOO O OO O
+      O    O   O   O    O
+      OOOO OOO O OOO OOOO
+      ___O O       O O
+      OOOO O OO.OO O OOOO
+      T      O E O      T
+      OOOO O OOOOO O OOOO
+      ___O O       O O
+      OOOO O OOOOO O OOOO
+      O        O        O
+      O OO OOO O OOO OO O
+      O  O           O  O
+      OO O O OOOOO O O OO
+      O    O   O   O    O
+      O OOOOOO O OOOOOO O
+      O                 O
+      OOOOOOOOOOOOOOOOOOO
