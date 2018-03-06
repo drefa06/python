@@ -1,20 +1,23 @@
 #!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 
 import os,pickle
+
+from io import open
 
 class Scores:
     """ class Scores
     Gestion des scores et des parties en cours.
 
     Attributs:
-        __score (dict) = scores gérés
+        __score (dict) = scores gÃ©rÃ©s
 
     Methodes:
         __init__        init de __score en fonction du fichier ./scores
        isPlayer         le joueur fait-il partie du dictionnaire des scores
        getOngoingGame   retourne le/les parties en cours d'un joueur
-       initGame         initialise les données d'un joueur sur un labyrinthe
+       initGame         initialise les donnÃ©es d'un joueur sur un labyrinthe
        recordGame       Enregistre dans le fichier ./scores le score ou la partie en cours d un joueur
        printMapScores   Imprime les meilleurs scores par labyrinthe
     """
@@ -48,7 +51,7 @@ class Scores:
             return []
 
     def initGame(self,player,mapName):
-        """initialise les données d'un joueur
+        """initialise les donnÃ©es d'un joueur
         Entree: player (str)  = joueur
                 mapName (str) = nom du labyrinthe
         Sortie: robotPos (tuple) = position du robot
@@ -56,28 +59,29 @@ class Scores:
         if not self.isPlayer(player):
             """cas d'un nouveau joueur
             """
-            self.__score[player]={mapName:{'ongoing':True,'bestScore':None,'lastScore':0,'robot':None}}
+            self.__score[player]={mapName:{'ongoing':True,'bestScore':None,'lastScore':0,'robot':None,'level':0}}
         elif mapName not in self.__score[player]:
-            """cas d'un joueur existant n'ayant pas encore utilisé cette carte
+            """cas d'un joueur existant n'ayant pas encore utilisÃ© cette carte
             """ 
-            self.__score[player][mapName]={'ongoing':True,'bestScore':None,'lastScore':0,'robot':None}
+            self.__score[player][mapName]={'ongoing':True,'bestScore':None,'lastScore':0,'robot':None,'level':0}
         
-        """Dans tous les cas recupere la position du robot associé"""
+        """Dans tous les cas recupere la position du robot associÃ©"""
         robotPos   = self.__score[player][mapName]['robot']
         robotScore = self.__score[player][mapName]['lastScore']
         return robotPos,robotScore
 
-    def recordGame(self,player,mapName,playerRobot,ongoing=True):
+    def recordGame(self,player,playerMap,playerRobot,ongoing=True):
         """Enregistre le score ou la partie en cours d un joueur
         Entree: player (str)  = joueur
                mapName (str) = nom du labyrinthe
-               playerRobot (class robot instance) = robot utilisé par ce joueur sur ce labyrinthe
+               playerRobot (class robot instance) = robot utilisÃ© par ce joueur sur ce labyrinthe
                ongoing (bool) = partie en cours
         Sortie: Rien
         """
-        playerMap = self.__score[player][mapName]
+        playerMap = self.__score[player][playerMap.getName()]
 
         playerMap['ongoing']   = ongoing
+        playerMap['level']     = playerMap.getLevel()
         playerMap['lastScore'] = playerRobot.getScore()
         playerMap['robot']     = playerRobot.getPosition()
 
@@ -109,12 +113,12 @@ class Scores:
 
         scores.sort(key=itemgetter("score"), reverse=False)
         
-        print "\nmap {} best scores: ".format(mapName)
+        print("\nmap {} best scores: ".format(mapName))
         if len(scores) == 0:
-            print "No scores"
+            print("No scores")
         else:
             for rank,score in enumerate(scores):
-                print " {} - {}".format(score['score'],score['name'])
+                print(" {} - {}".format(score['score'],score['name']))
 
 
 
