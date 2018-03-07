@@ -2,10 +2,7 @@
 
 import threading
 import sys, time, os
-import select
 import signal
-
-import pdb
 
 if os.name == 'nt':
     import msvcrt
@@ -20,19 +17,24 @@ else:
     import queue
 
 
+# ===============================================================================================
 class chkSysInput(threading.Thread):
+    """
+    Classe chargée d'attendre une entrée de charactere et de la transmettre des que le charactere '\r' est detecté
+    """
     def __init__(self,qRead,interrupt,timeout=1):
         threading.Thread.__init__(self)
-        self.__qRead = qRead
-        self.__interrupt = interrupt
-        self.__timeout = timeout
+        self.__qRead = qRead            # Queue de lecture de ligne
+        self.__interrupt = interrupt    # interruption
+        self.__timeout = timeout        # timeout
 
     def run(self):
         while not self.__interrupt.isSet():
-            # tant que le locker est locked, controle sys.stdin
+            # tant que l'event n'est pas activé, controle sys.stdin pour linux ou n'importe quel charactere pour nt
             if os.name == 'nt':
                 while msvcrt.kbhit():
                     char = msvcrt.getche()
+                    #recupere chaque caractere, si '\r' est lu, placer la ligne dans la queue
                     if char != '\r':
                         self.buff += char
                     else:
@@ -43,7 +45,7 @@ class chkSysInput(threading.Thread):
             else:
                 read, _, _ = select.select([sys.stdin], [], [], self.__timeout)
                 if read:
-                    # quelquechose a lire, le placer dans la queue
+                    # une ligne est lue, la placer dans la queue
                     val = read[0].readline()
 
                     self.__qRead.put(val)
@@ -51,25 +53,24 @@ class chkSysInput(threading.Thread):
                     time.sleep(0.1)
                     self.__interrupt.set()
 
+# ===============================================================================================
 class mngInput:
     """Cette classe permet de gerer un input non bloquant.
        input bloque le terminal
        cet input laisse la main au programme principal toutes les secondes, il doit donc etre inclu dans une boucle de tests.
-       cet input peut etre interrompu
+       cet input peut etre interrompu.
     """
     def __init__(self,prompt):
         """ __init__ de la classe
         :param prompt: le prompt a afficher avant de tester l'entree
         """
-        self.q_read = queue.Queue()
-        #self.interrupt = threading.Lock()
-        self.interruptEvent = threading.Event()
+        self.q_read = queue.Queue()                 # Queue de lecture
+        self.interruptEvent = threading.Event()     # Evenement utile a l'interruption d'input
 
-        #self.threadRead = threading.Thread(target=self.checkSysInput, args=(self.q_read,))
-        self.threadRead = chkSysInput(self.q_read,self.interruptEvent)
+        self.threadRead = chkSysInput(self.q_read,self.interruptEvent) #Thread d'observation des entrée clavier
         self.threadRead.daemon = True
 
-        sys.stdout.write(prompt)
+        sys.stdout.write(prompt)    #ecriture du prompt
         sys.stdout.flush()
 
         self.buff=""
@@ -83,9 +84,9 @@ class mngInput:
         """
         if self.threadRead.is_alive():
             try:
-                """libere le locker"""
-                #self.interrupt.release()
+                #active l'evenement de control
                 self.interruptEvent.set()
+                
             except threading.ThreadError as err:
                 if str(err) == 'release unlocked lock':
                     """cas particulier du locker unlocked"""
@@ -93,36 +94,6 @@ class mngInput:
                 else:
                     """les autres cas d'erreurs doivent etre remonté"""
                     raise threading.ThreadError(str(err))
-
-            #self.threadRead.join()
-
-        return True
-
-
-    def checkSysInput(self,q_read):
-        """ checkSysInput: c'est la fonction executé dans la thread qui verifie l'entree standard pendant 1 sec.
-
-        :param q_read: queue permettant de retourner la ligne lue dans l'entree standard
-        :return: RIEN
-        """
-        while self.interrupt.locked():
-            #tant que le locker est locked, controle sys.stdin
-            if os.name == 'nt':
-                while msvcrt.kbhit():
-                    char = msvcrt.getche()
-                    if char != '\r':
-                        self.buff += char
-                    else:
-                        self.q_read.put(self.buff)
-                        self.buff = ""
-                        break
-                    
-            else:
-                read, _, _ = select.select([sys.stdin], [], [], 1)
-                if read:
-                    #quelquechose a lire, le placer dans la queue
-                    val = read[0].readline()
-                    self.q_read.put(val)
 
 
     def getInput(self):
@@ -133,7 +104,6 @@ class mngInput:
         text=None
         if not self.threadRead.is_alive():
             self.interruptEvent.clear()
-            #self.interrupt.acquire()
 
             self.threadRead.start()
 
@@ -144,76 +114,108 @@ class mngInput:
 
         return text
 
-"""Variable contenant l'instance de classe crée"""
+# ===============================================================================================
+#Variable contenant l'instance de classe crée
 CIN = None
-"""Locker sur les action sur la classe, indispensable si l'appel de Input et l'interruption ne sont pas sur la meme thread"""
+#Locker sur les action sur la classe, indispensable si l'appel de Input et l'interruption ne sont pas sur la meme thread
 CINlock = threading.Lock()
 
+interruptEvent = False
+
+# ===============================================================================================
 def Input(prompt):
-    """ Input: c'est la fonction a importer
+    """ Input: c'est la fonction a importer qui remplace le input classique
 
     :param prompt: Le prompt a ecrire avant la ligne a entrer par l'utilisateur
     :return: la ligne lue
     """
+    import pdb
     global CIN
+    
+    #activer le locker
     CINlock.acquire()
+    #creation de la classe de gestion si ce n'est pas deja fait
     if CIN == None:
         CIN = mngInput(prompt)
 
+    #lancer l'observation du flux d'entree
     val = CIN.getInput()
 
+    #une ligne est lue, interrompre l'observation
     if val != None:
         CIN.interruptInput()
         del CIN
         CIN=None
-        #interruptInput()
 
+    #liberer le locker
     CINlock.release()
 
     return val
 
 
+# ===============================================================================================
 def interruptInput(*args, **kwargs):
     """
+    C'est la fonction d'interruption d'input.
 
     :param args: utilisé par signal lors de l'interruption par CTRL+C
     :param kwargs:
     :return:
     """
-    global CIN
+
+    global CIN,interruptEvent
+    val=None
+    # activer le locker
     CINlock.acquire()
+    #si la classe de gestion existe, interrompre l'observation
     if CIN != None:
         CIN.interruptInput()
         del CIN
         CIN=None
 
-        sys.stdout.write('[interrupted]')
-        sys.stdout.flush()
+    interruptEvent = True
 
+    #liberer le locker
     CINlock.release()
 
+    return val
+    
 
-"""Control du signal CTRL+C"""
+# ===============================================================================================
+#Control du signal CTRL+C
 signal.signal(signal.SIGINT, interruptInput)
 
-
-
+# ===============================================================================================
 if __name__ == "__main__":
     #Cette partie permet d'appeller une fonction de ce module en ligne de commande: python lib/ip.py <fonction> [<arg> [<arg>] ... ]
     #c'est utilisé par les test pour le cas particulier de askIP pour simuler une entrée de commande par l'utilisateur
     import sys,time
-    fct = locals()[sys.argv[1]]
 
-    if sys.argv[1] == 'Input':
-        while True:
-            time.sleep(1)
-            if len(sys.argv) >2:
-                args = sys.argv[2:]
-                ret = fct(*args)
-            else:
-                ret = fct()
+    sys.argv.pop(0)
+
+    fct = locals()[sys.argv.pop(0)]
+
+    if fct == Input:
+        args = [sys.argv.pop(0)]
+        if len(sys.argv) > 0:
+            timeout=sys.argv.pop(0)
+        else:
+            timeout=1000
+        print('timeout = {}sec'.format(timeout))
+
+        startTime = time.time()
+        while not interruptEvent:
+            ret = fct(*args)
 
             if ret:
                 print('read: {}'.format(ret))
                 break
+
+            if time.time()-startTime > int(timeout):
+                interruptInput()
+                break
+
+            time.sleep(0.1)
+
+
 
