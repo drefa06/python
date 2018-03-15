@@ -16,19 +16,22 @@ if (sys.version_info < (3, 0)):
 else:
     import queue
 
+class AlarmException(Exception):
+    pass
 
 # ===============================================================================================
 class chkSysInput(threading.Thread):
     """
     Classe chargée d'attendre une entrée de charactere et de la transmettre des que le charactere '\r' est detecté
     """
-    def __init__(self,qRead,interrupt,timeout=1):
+    def __init__(self,qRead,interrupt):
         threading.Thread.__init__(self)
-        self.__qRead = qRead            # Queue de lecture de ligne
+        self.__qRead     = qRead        # Queue de lecture de ligne
         self.__interrupt = interrupt    # interruption
-        self.__timeout = timeout        # timeout
 
     def run(self):
+        self.buff=""
+
         while not self.__interrupt.isSet():
             # tant que l'event n'est pas activé, controle sys.stdin pour linux ou n'importe quel charactere pour nt
             if os.name == 'nt':
@@ -43,15 +46,17 @@ class chkSysInput(threading.Thread):
                         break
 
             else:
-                read, _, _ = select.select([sys.stdin], [], [], self.__timeout)
+                read, _, _ = select.select([sys.stdin], [], [], 1)
                 if read:
                     # une ligne est lue, la placer dans la queue
-                    val = read[0].readline()
+                    self.buff = read[0].readline()
 
-                    self.__qRead.put(val)
+                    self.__qRead.put(self.buff)
                     self.__qRead.join()
                     time.sleep(0.1)
                     self.__interrupt.set()
+                    self.buff=""
+
 
 # ===============================================================================================
 class mngInput:
@@ -60,10 +65,13 @@ class mngInput:
        cet input laisse la main au programme principal toutes les secondes, il doit donc etre inclu dans une boucle de tests.
        cet input peut etre interrompu.
     """
-    def __init__(self,prompt):
+    def __init__(self,prompt,timeout=None):
         """ __init__ de la classe
         :param prompt: le prompt a afficher avant de tester l'entree
         """
+        if timeout is None: self.timeout=10000
+        else:               self.timeout=timeout
+
         self.q_read = queue.Queue()                 # Queue de lecture
         self.interruptEvent = threading.Event()     # Evenement utile a l'interruption d'input
 
@@ -74,6 +82,9 @@ class mngInput:
         sys.stdout.flush()
 
         self.buff=""
+
+    def alarmHandler(self,signum, frame):
+        raise AlarmException
 
     def interruptInput(self,*args, **kwargs):
         """ interruptInput: permet l'interruption de la thread definie par self.threadRead via le locker self.interrupt
@@ -101,16 +112,24 @@ class mngInput:
 
         :return: la ligne lue dans sys.stdin
         """
-        text=None
-        if not self.threadRead.is_alive():
-            self.interruptEvent.clear()
+        signal.signal(signal.SIGALRM, self.alarmHandler)
+        signal.alarm(self.timeout)
+        try:
+            text=None
+            if not self.threadRead.is_alive():
+                self.interruptEvent.clear()
 
-            self.threadRead.start()
+                self.threadRead.start()
 
-        else:
-            if not self.q_read.empty():
-                text = self.q_read.get()
-                self.interruptInput()
+            else:
+                if not self.q_read.empty():
+                    text = self.q_read.get()
+                    self.interruptInput()
+
+        except AlarmException:
+            self.interruptInput()  
+
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
 
         return text
 
@@ -123,7 +142,7 @@ CINlock = threading.Lock()
 interruptEvent = False
 
 # ===============================================================================================
-def Input(prompt):
+def Input(prompt,timeout=None):
     """ Input: c'est la fonction a importer qui remplace le input classique
 
     :param prompt: Le prompt a ecrire avant la ligne a entrer par l'utilisateur
@@ -136,7 +155,7 @@ def Input(prompt):
     CINlock.acquire()
     #creation de la classe de gestion si ce n'est pas deja fait
     if CIN == None:
-        CIN = mngInput(prompt)
+        CIN = mngInput(prompt,timeout)
 
     #lancer l'observation du flux d'entree
     val = CIN.getInput()

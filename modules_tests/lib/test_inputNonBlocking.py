@@ -16,11 +16,11 @@ class inputNonBlockingTest(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def _try(self,testStr):
+    def _try(self,testStr,timeout=10000):
         inputStr = -1
         start = time.time()
         while True:
-            inputStr = inputNonBlocking.Input('')
+            inputStr = inputNonBlocking.Input('',timeout)
 
             if inputStr != None:
                 self.assertEqual(inputStr, testStr)
@@ -99,6 +99,10 @@ class inputNonBlockingTest(unittest.TestCase):
         sys.stdin = oldstdin
 
         self._try('ca aussi\n')
+
+    # =====================================================
+    def test_05_timeout_interrupt(self):
+        self._try('',10)
 
 
 

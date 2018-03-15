@@ -137,12 +137,45 @@ class mngInput:
 ```
 
 And it's enough to work.
-But you might manage to create the mngInput instance and be very carefull if you have several input in several thread in your script.
 
-So here is my final evolution to manage this case.
+## timeout ##
+
+You can also need to wait for a specified time and not more. So, you need to have a timeout solution.
+I found and adapt the following solution to my script.
+
+the solution is to use signal.alarm in getInput and raise an error that call interruptInput.
+
+You need to add:
+- new error class at the beginning:
+```python
+class AlarmException(Exception):
+    pass
+```
+- new method alarmHandler in mngInput called when timeout happen
+```python
+def alarmHandler(self,signum, frame):
+    raise AlarmException
+```
+- encapsulate the current code of getInput in:
+```python
+        signal.signal(signal.SIGALRM, self.alarmHandler)
+        signal.alarm(self.timeout)
+        try:
+            ## CURRENT CODE
+
+        except AlarmException:
+            self.interruptInput()  
+
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+        return text
+```
 
 ## Final solution ##
 
+At this step, you can use the class to do your job but you might manage to create the mngInput instance and be very carefull if you have several input in several thread in your script.
+
+So I suggest my final evolution to manage this case. It introduce the following:
 - Create a module variable CIN init to None. This will contains the mngInput instance
 - instanciate the mngInput class only when input is needed and protect it with a threading locker,
 - delete the instance and re init CIN as None for the interrupt
