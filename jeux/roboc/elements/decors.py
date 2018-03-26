@@ -38,7 +38,7 @@ class Wall(Decors):
     name = 'wall'
     reachable = False
 
-    robustness = 1  # Variable de solidité du mur, par defaut 1 pour coller au cahier des charges proposé
+    robustness = 3  # Variable de solidité du mur, par defaut 1 pour coller au cahier des charges proposé
 
     def action_percer(self,object=None):
         """ methode appelée lors de la tentative de percement du mur.
@@ -79,9 +79,10 @@ class Door(Decors):
         methode permettant la modification des attributs pour avoir une porte ouverte
         """
         from elements import decors,symbol
-        self.isOpen = True
-        self.isLock = False
-        self.reachable = True
+        self.isOpen     = True
+        self.isLock     = False
+        self.reachable  = True
+        self.robustness = 1
         self.symbol = symbol.symbolElements.getSymbol(decors.OpenDoor)
 
     def __close(self):
@@ -89,9 +90,10 @@ class Door(Decors):
         methode permettant la modification des attributs pour avoir une porte fermée
         """
         from elements import decors,symbol
-        self.isOpen = False
-        self.isLock = False
-        self.reachable = False
+        self.isOpen     = False
+        self.isLock     = False
+        self.reachable  = False
+        self.robustness = 2
         self.symbol = symbol.symbolElements.getSymbol(decors.CloseDoor)
 
     def __lock(self):
@@ -99,9 +101,10 @@ class Door(Decors):
         methode permettant la modification des attributs pour avoir une porte fermée a cle
         """
         from elements import decors,symbol
-        self.isOpen = False
-        self.isLock = True
-        self.reachable = False
+        self.isOpen     = False
+        self.isLock     = True
+        self.reachable  = False
+        self.robustness = 3
         self.symbol = symbol.symbolElements.getSymbol(decors.LockDoor)
 
     def action_murer(self,object=None):
