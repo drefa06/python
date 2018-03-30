@@ -32,6 +32,7 @@ Contains some howto's files but also some usefull lib.
 - paramDecorator.py: parameters type analyse decorator.
 - timeDecorator.py: time management decorator.
 - [superTypes.py](lib/superTypes.md): usefull new types.
+- polygone.py: define some point/vector/polygon elements.
 
 ## modules_tests ## 
 
