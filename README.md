@@ -4,7 +4,7 @@ This directory contains numbers of usefull appli and analyse in python.
 
 ## appli ##
 
-- fibonacci.py: list of fibonacci algorithm and analyse the more efficient ones.
+- [fibonacci.py](fibonacci.md): list of fibonacci algorithm and analyse the more efficient ones.
 
 ## jeux ##
 
@@ -40,7 +40,7 @@ This folder contains some tests files for applis and libs
 
 ### appli ###
 
-- fibonacci_test.py: tests of fibonacci.py
+- None
 
 ### lib ###
 
