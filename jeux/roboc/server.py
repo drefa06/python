@@ -257,6 +257,9 @@ class Server:
                 self.__logger.debug('send to client Q {}:{}'.format(otherClientName, 'START;'))
                 otherClient['q_send'].put('START;')
 
+        #Initialiser la carte en fonction du nombre de joueur actif
+        self.__currentMap.initBeforePlay()
+
         #Changer l'etat du serveur a 'start'
         self.__serverStatus = 'start'
 

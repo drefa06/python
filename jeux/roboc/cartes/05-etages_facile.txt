@@ -1,4 +1,5 @@
 [Data]
+level=0
 player=P2
 map_0=OOOOOOO
       OE     O

@@ -22,6 +22,15 @@ class Key(Objet):
     name = 'key'
 
 # ===============================================================================================
+class Light(Objet):
+    """classe Light
+    Herite de Objet
+
+    L'objet light est utilisé pour ameliorer la vue dans le noir
+    """
+    name = 'light'
+
+# ===============================================================================================
 # Ajouter ici les objets a utiliser dans le labyrinthe
 # example: Torche (pour y voir dans le noir), masse (pour percer un mur), arme, etc
 

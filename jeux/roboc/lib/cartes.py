@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function
 
+import pdb
+
 import copy
 import os, sys, re
 import random
@@ -60,7 +62,7 @@ class GameMap:
         self.__mapElementCoord={}   # Attribut qui liste les coordonnée de chaque type d'elements trouvé
 
         self.__players=dict()       # Liste des joueurs
-        #self.__ias=dict()          # Liste des IA
+        self.__ias=dict()           # Liste des IA
 
         #Read map in txt format and load it in trimensional dict {level 0:[<row1>], ... ,[rowN]], level1: [], ...}
         self.loadMap()
@@ -71,29 +73,64 @@ class GameMap:
         """
         self.strMap()
 
+    def addEntity(self,entityType,identity):
+        """
+        Methode d'ajout d'une entité defini par l'identité = <entityType><index>[_<name>]
+        :param identity:
+        :return: Les coordonnées du joueur créé
+        """
+        self.__logger.debug('Add {} {}'.format(entityType,identity))
+        index=re.sub(entityType,'',identity.split('_')[0])
+
+        #Definie la position du nouveau joueur
+        pos = self.initPosition(entityType)
+
+        if pos:
+            #Creation de l'entité
+            if entityType == 'player':
+                rob = robot.Player(pos, str(index))
+                self.__players[identity]=rob
+            elif entityType == 'ia':
+                rob = robot.Ia(pos, str(index))
+                self.__ias[identity]=rob
+            elif entityType == 'light':
+                rob = objets.Light(pos, str(index))
+                self.__lights[identity]=rob
+
+
+            self.__logger.debug('  => Add {} SUCCESS to position {}'.format(entityType,pos))
+            return pos
+        else:
+            self.__logger.debug('  => Add {} FAIL')
+            return None
+
     def addPlayer(self,identity):
         """
         Methode d'ajout d'un joueur defini par l'identité = player<index>_<nom du joueur>, Le nom de joueur est fourni par le joueur lui-meme
         :param identity:
         :return: Les coordonnées du joueur créé
         """
-        self.__logger.debug('Add Player {}'.format(identity))
-        playerIndex=re.sub('player','',identity.split('_')[0])
+        pdb.set_trace()
+        return self.addEntity('player',identity)
+
+        #self.__logger.debug('Add Player {}'.format(identity))
+        #playerIndex=re.sub('player','',identity.split('_')[0])
 
         #Definie la position du nouveau joueur
-        pos = self.initPlayerPosition()
+        #pos = self.initPlayerPosition()
 
-        if pos:
+        #if pos:
             #Creation du joueur
-            playerRobot = robot.Player(pos, str(playerIndex))
+        #    playerRobot = robot.Player(pos, str(playerIndex))
 
-            self.__players[identity]=playerRobot
+        #    self.__players[identity]=playerRobot
 
-            self.__logger.debug('  => Add Player SUCCESS to position {}'.format(pos))
-            return pos
-        else:
-            self.__logger.debug('  => Add Player FAIL')
-            return None
+        #    self.__logger.debug('  => Add Player SUCCESS to position {}'.format(pos))
+        #    return pos
+        #else:
+        #    self.__logger.debug('  => Add Player FAIL')
+        #    return None
+
 
     #Accesseurs des robots (objet Player) associé a un joueur (défini par son identité)
     def getPlayerRobot(self, identity=None):
@@ -125,6 +162,21 @@ class GameMap:
             return None
         else:
             return self.__mapMatrix[coordinate[0]][coordinate[1]][coordinate[2]]
+
+    def initBeforePlay(self):
+        pdb.set_trace()
+        self.__playerNbr = len(self.__players)
+        for k,v in self.__mapDatas.items():
+            if hasattr(v,'__call__'):
+                self.__mapDatas[k]=v(self.__playerNbr)
+
+        if not self.__mapDatas['ia'] is None:
+            for ia in range(self.__mapDatas['ia']):
+                self.addEntity('ia','ia{}'.format(ia))
+        if not self.__mapDatas['light'] is None:
+            for light in range(self.__mapDatas['light']):
+                self.addEntity('light','light{}'.format(light))
+
 
 
     def loadMap(self):
@@ -201,6 +253,14 @@ class GameMap:
                             row[i] = symb
 
                     self.__mapMatrix[layer].append(row)
+
+            elif option.startswith('level'):
+                pdb.set_trace()
+                from level import getLevelElement
+
+                lvlElem = getLevelElement(optionVal)
+                for k,v in lvlElem.items():
+                    self.__mapDatas[k] = v
 
             else:
                 self.__mapDatas[option] = optionVal
@@ -283,7 +343,7 @@ class GameMap:
 
         return elemPositions
 
-    def initRobotPosition(self, robotType):
+    def initPosition(self, robotType):
         """Retourne la position initiale et courrante de l'objet robotType (Joueur ou IA)
 
         :return: coordonnée
@@ -316,8 +376,8 @@ class GameMap:
         return initialPosition
 
     #Init position pour un joueur et une IA
-    def initPlayerPosition(self): return self.initRobotPosition('player')
-    def initIaPosition(self):     return self.initRobotPosition('ia')
+    def initPlayerPosition(self): return self.initPosition('player')
+    def initIaPosition(self):     return self.initPosition('ia')
 
     def getMaxPossibleMove(self,currentPos,nextPos):
         """Retourne la position maximum atteignable entre la position actuelle et celle future.

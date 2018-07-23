@@ -1,4 +1,5 @@
 [Data]
+level=0
 player=random
 map_0=OOOOOOOOOOOOOOOOOOO
       O        O        O
