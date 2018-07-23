@@ -1,0 +1,16 @@
+[Data]
+level=0
+player=P2
+map_0=OOOOOOO
+      OE     O
+      _O   O  O
+      __O/O_O.SO
+      _O   O  O
+      OT     O
+      OOOOOOO
+map_1=_
+      _OOOOOOO
+      _OT     O
+      __OOOOO.SO
+      _O  P   O
+      _OOOOOOO

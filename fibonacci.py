@@ -30,21 +30,37 @@ def fib22(n,D_fib={1:1,2:1}):
         D_fib[n-1]=fib22(n-1,D_fib)+fib22(n-2,D_fib)
         return D_fib[n-1],D_fib
 
-#generator
+#generator fct
 def fib3():
         a,b = 0,1
         while True:
             a,b = b,a+b
             yield a
+#basic generator
+def fib31(n):
+        f31=fib3()
+        for i in range(n):
+            f31.next()
+        return f31.next()
+#basic generator + basic memo
+def fib32(n,D_fib={1:1,2:1}):
+        if n in D_fib: return D_fib[n],D_fib
 
-#memoize function 1: use with f11,f21 or f3
+        f32=fib3()
+        for i in range(n):
+            D_fib[i] = f32.next()
+        D_fib[n] = f32.next()
+        return D_fib[n],D_fib
+
+
+#memoize function 1: use with f11,f21 or f31
 memo={}
 def memoize1(fn, arg):    
         if arg not in memo:
             memo[arg] = fn(arg)
         return memo[arg]
 
-#memoize function 2: use with f12 or f21
+#memoize function 2: use with f12,f22 or f32
 def memoize2(fn, arg):    
         if arg not in memo:
             D_fib={1:1,2:1}
@@ -53,36 +69,42 @@ def memoize2(fn, arg):
             memo[arg] = res
         return memo[arg]
 
-#memoize as decorator class 1: use with f11,f21 or f3
+#memoize as decorator class 1: use with f11,f21 or f31
 class Memoize1:
         def __init__(self, fn):
-            self.fn = fn
-            self.memo = {}
+            self.fn1 = fn
+            self.memo1 = {}
         def __call__(self, arg):
-            if arg not in self.memo:
-                self.memo[arg] = self.fn(arg)
-            return self.memo[arg]
+            if arg not in self.memo1:
+                self.memo1[arg] = self.fn1(arg)
+            return self.memo1[arg]
 
 @Memoize1
-def fibm111(n): return fib11(n)
+def fibm11(n): return fib11(n)
 @Memoize1
-def fibm121(n): return fib21(n)
+def fibm21(n): return fib21(n)
+@Memoize1
+def fibm31(n): return fib31(n)
 
-#memoize as decorator class 2: use with f12 or f21
+
+#memoize as decorator class 2: use with f12,f22 or f32
 class Memoize2:
         def __init__(self, fn):
-            self.fn = fn
-            self.memo = {}
-        def __call__(self, arg):
-            if arg not in self.memo:
-                D_fib={1:1,2:1}
-                res,D_fib = fn(arg,D_fib)
-                self.memo.update(D_fib)
-                self.memo[arg] = res
-            return self.memo[arg]
+            self.fn2 = fn
+            self.memo2 = {1:1,2:1}
+        def __call__(self, n,D_fib={1:1,2:1}):
+            self.memo2 = D_fib
+            #pdb.set_trace()
+            if n not in self.memo2:
+                res,D_fib = self.fn2(n,self.memo2)
+                self.memo2.update(D_fib)
+                self.memo2[n] = res
+            return self.memo2[n]
 
-@Memoize1
-def fibm212(n): return fib12(n)
-@Memoize1
-def fibm222(n): return fib22(n)
+@Memoize2
+def fibm12(n,D_fib={1:1,2:1}): return fib12(n,D_fib)
+@Memoize2
+def fibm22(n,D_fib={1:1,2:1}): return fib22(n,D_fib)
+@Memoize2
+def fibm32(n,D_fib={1:1,2:1}): return fib32(n,D_fib)
 

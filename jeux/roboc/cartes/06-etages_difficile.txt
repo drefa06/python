@@ -1,0 +1,58 @@
+[Data]
+level=0
+player=P1
+map_0=_
+      _
+      _
+      _
+      _
+      __OOOOOO
+      __O  K O
+      __OT  SO
+      __O    O
+      __OOOOOO
+map_1=_
+      _
+      _
+      _
+      _
+      OOOO_OOOO_OOOO
+      O  O_O  O_O  O
+      OS O_OS O_O SO
+      O  O_O  O_O  O
+      O  O_OOOO_O  O
+      O  O______O  O
+      O.OOOOOOOOOO.O
+      O  /      /  O
+      O  O  P   O  O
+      OOOOOOTOOOOOOO
+map_2=_
+      _
+      _
+      _
+      _
+      OOOOOOOOOOOOOO
+      O  O      .  O
+      OS O  S   O SO
+      O  .      O  O
+      OOOOOOOOOOOOOO
+map_3=OOOOOOTOOOOOOO
+      O  O  P   O  O
+      O  /      /  O
+      O.OOOOOOOOOO.O
+      O  O______O  O
+      O  O_OOOO_O  O
+      O  O_O  O_O  O
+      OS O_OS O_O SO
+      O  O_O  O_O  O
+      OOOO_OOOO_OOOO
+map_4=_
+      _
+      _
+      _
+      _
+      ____OOOOOOO
+      ____O   O O
+      ____O S + E
+      ____O   O O
+      ____OOOOOOO

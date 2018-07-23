@@ -1,0 +1,8 @@
+[Data]
+player=P
+map_0=_
+      _OOOOOO_
+      _OK + O_
+      _OPOO E_
+      _OOOOOO_
+      _

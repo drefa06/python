@@ -1,92 +1,104 @@
-#!/usr/bin/env python
-# -*- coding: latin-1 -*-
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, division, print_function
 
-import os, re
+import argparse
+import sys,os
+import subprocess
+import time
+import logging
 
-from lib import *
+import client
+import server
+
+from lib import cartes
 
 
-def main():
-    """Charger les scores existants"""
-    score = scores.Scores()
+if (sys.version_info < (3, 0)):
+    input = raw_input
 
-    """Demander le nom et verifier si le joueur a une partie en cours, la il peut
-        - soit continuer la partie en cours,
-        - soit en commencer une nouvelle,
+# ===============================================================================================
+def initLogger(logfileName):
+    logfile = os.path.join(os.getcwd(), "log", logfileName)
+    # logLevel = getattr(logging, args.log.upper(), None)
+    # if not isinstance(logLevel, int):
+    #    raise ValueError('Invalid log level: %s' % logLevel)
+    logging.basicConfig(filename=logfile, level=logging.DEBUG, \
+                        format='%(asctime)s %(levelname)-8s %(name)-12s:%(threadName)s %(message)s', \
+                        datefmt='%H:%M:%S.%f',
+                        filemode='w')
+
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+
+# ===============================================================================================
+def main(args):
     """
-    player = raw_input("Entrez votre nom : ")
-    ongoingGame = score.getOngoingGame(player)
+    programme principal
 
-    if len(ongoingGame) != 0:
-        print "Une partie est en cours sur le(s) labyrinthe suivant: "
-        for i,name in enumerate(ongoingGame):
-            print "  {} - {}".format(i+1,name)
-        i+=1
-        print "  {} - {}".format(i+1,"Nouveau jeu")
+    """
 
-        correct=False
-        while not correct:
-            choice = raw_input("Votre choix [1-{}]? ".format(i+1))
-            if re.match('\d+',choice) and int(choice) in range(1,i+2):
-                correct=True
-            else:
-                print "    choix incorrect"
+    #parsing
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--server", action="store_true", help="lance le server")
+    parser.add_argument("-m", "--map", action="store", default=None, help="Carte de jeux")
+    #parser.add_argument("-l", "--log", action="store", default='INFO', help="logfile name")
+    args = parser.parse_args()
 
-        if int(choice) == i+1:
-            mapName = cartes.chooseMap("./cartes")
+    if args.server:
+        initLogger('roboc_server.log')
+
+        #C'est un serveur
+        logging.info('START server')
+
+        #On choisi la carte de jeu si on ne la pas donné en parametre.
+        if args.map is None:
+            mapName = cartes.chooseMap(os.path.join(os.getcwd(),"cartes"))
         else:
-            mapName = ongoingGame[int(choice)-1]
+            mapName = args.map
+
+        #creation du serveur
+        obj = server.Server(os.path.join(os.getcwd(),"cartes", mapName))
+
+        #connection et demarrage
+        if obj.connect(): obj.start()
+
 
     else:
-        mapName = cartes.chooseMap("./cartes")
+        #c'est un client
+        initLogger('roboc_client.log')
 
-    """Charger la carte choisie"""
-    currentMap = cartes.GameMap(os.path.join("./cartes",mapName))
+        #creation du client avec votre nom de joueur
+        playerName = input("Entrez votre nom : ")
+        obj = client.Client(playerName)
 
-    """Creer un objet Robot mettant en relation le joueur la carte et le robot a sa position:
-          - soit la position initiale pour une nouvelle partie
-          - soit la position connue a l'enregistrement de la partie
-    """
-    mapInitialRobotPosition=currentMap.getRobotPositions()
-    playerRobotPos,playerRobotScore = score.initGame(player,mapName)
-    if playerRobotPos is None:
-        mapFirstRobotAvailable,position=mapInitialRobotPosition.items()[0]
-        playerRobot=robot.Robot(position,currentMap)
-    else:
-        playerRobot=robot.Robot(playerRobotPos,currentMap,playerRobotScore)
+        # connection et demarrage du client
+        if obj.connect():
+            obj.start()
 
-    """Boucle d'execution"""
-    finish=False
-    while not finish:
-        """Imprimer la carte"""
-        print currentMap.strMap(playerRobot.getPosition())
+        else:
+            #cas ou la connection echoue (car pas de serveur en cour)
+            #permet de demarrer un serveur en background si on le souhaite
+            incorrect = True
+            while incorrect:
+                rep = input("Voulez-vous demarrer un serveur de jeux ? (O|N)")
+                if rep.upper() in ['O','OUI','N','NON']: incorrect = False
+                else: print("    Reponse incorrecte")
 
-        """Demander la commande:
-              - Q => enregistrer la partie en cours
-              - N,S,E,O => faire bouger le robot
-                        => si le mouvement amene a la sortie, enregistrer le score
-        """
-        correct=False
-        while not correct:
-            cmd = raw_input("Entrez une commande : ")
+            if rep.upper() in ['O','OUI']:
+                mapName = cartes.chooseMap("./cartes")
 
-            if cmd.upper() == 'Q':
-                score.recordGame(player,mapName,playerRobot)
-                finish=True
-                correct=True
-            else:
-                if not playerRobot.move(cmd.upper()):
-                    continue
-                correct=True
+                bg = subprocess.Popen(['python', 'roboc.py', '-s', '-m', mapName],stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                time.sleep(1)
 
-                if currentMap.isExit(playerRobot.getPosition()):
-                    print "Félicitations ! Vous avez terminé le labyrinthe en {} coups.".format(playerRobot.getScore())
-                    score.recordGame(player,mapName,playerRobot,False)
-                    finish=True
-        
-    """Imprimer le tableau des scores pour la carte execute"""
-    score.printMapScores(mapName)
-    #currentMap.saveMap()
+                if obj.connect(): obj.start()
 
-main()
+                bg.kill()
+
+
+# ===============================================================================================
+if __name__ == "__main__":
+    main(sys.argv[1:])
     
