@@ -31,10 +31,10 @@ N_RANDOM_ELEM_TIMEOUT = 10
 
 class test_fibonacci(unittest.TestCase):
 
-    Title = ",Loop case,,,,,,Recursion case,,,,,,Generator case\nElement,Loop no memo,Loop memo basic,Loop memo1,Loop memo2,Loop deco memo1,Loop deco memo2,Recurs no memo,Recurs memo basic,Recurs memo1,Recurs memo2,Recurs deco memo1,Recurs deco memo2,Generator no memo,Generator memo basic,Generator memo1,Generator memo2,Generator deco memo1,Generator deco memo2\n"
+    Title = ",Loop case,,,,,,Recursion case,,,,,,Generator case\nElement,Loop no memo,Loop memo basic,Loop memo mutable,Loop memo1,Loop memo2,Loop deco memo1,Loop deco memo2,Recurs no memo,Recurs memo basic,Recurs memo mutable,Recurs memo1,Recurs memo2,Recurs deco memo1,Recurs deco memo2,Generator no memo,Generator memo basic,Generator memo mutable,Generator memo1,Generator memo2,Generator deco memo1,Generator deco memo2\n"
 
     fiboType = ['looping','recursion','generator']
-    benchFct = ['bench_no_memo','bench_basic_memo','bench_memoize1','bench_memoize2','bench_deco_memoize1','bench_deco_memoize2']
+    benchFct = ['bench_no_memo','bench_basic_memo','bench_memo_mutable','bench_memoize1','bench_memoize2','bench_deco_memoize1','bench_deco_memoize2']
 
     def setUp(self):
         self.f = open('fibonacci.res','a')

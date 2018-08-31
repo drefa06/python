@@ -30,6 +30,17 @@ def fib22(n,D_fib={1:1,2:1}):
         D_fib[n-1]=fib22(n-1,D_fib)+fib22(n-2,D_fib)
         return D_fib[n-1],D_fib
 
+#recursion + memo based on default mutable arg
+def fib23(n, D_fib={1:1,2:1}): 
+        try:
+            value = D_fib[n] 
+
+        except KeyError:
+            value = fib23(n-1)+fib23(n-2) 
+            D_fib[n] = value 
+
+        return value
+
 #generator fct
 def fib3():
         a,b = 0,1

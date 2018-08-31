@@ -175,6 +175,34 @@ def bench_basic_memo(fiboType,valueStart,valueEnd=0,randomPercentil=0):
     print duration
 
 #=====================================================
+#Memoize with default mutable arg
+def bench_memo_mutable(fiboType,valueStart,valueEnd=0,randomPercentil=0):
+    duration = 'none'
+    
+    if fiboType == 'looping':     fiboFct = None
+    elif fiboType == 'recursion': fiboFct = fibonacci.fib23
+    elif fiboType == 'generator': fiboFct = None
+
+    if valueEnd == 0:
+        fiboCmd   = (findOneElem,fiboFct,{1:1,2:1})
+        fiboParam = (int(valueStart),)
+
+    elif valueEnd != 0 and randomPercentil == 0:
+        fiboCmd   = (findNsuccessiveElem,fiboFct,{1:1,2:1})
+        fiboParam = (int(valueStart),int(valueEnd))
+
+    elif valueEnd != 0 and randomPercentil != 0:
+        fiboCmd = (findNrandomElem,fiboFct,{1:1,2:1})
+        fiboParam = (int(valueStart),int(valueEnd),int(randomPercentil))
+
+    if fiboFct is None:
+        duration='NA'
+    else:
+        duration = bench(fiboCmd,fiboParam)
+
+    print duration
+
+#=====================================================
 #memoize1
 def bench_memoize1(fiboType,valueStart,valueEnd=0,randomPercentil=0):
     duration = 'none'

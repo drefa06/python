@@ -54,6 +54,29 @@ def fib12(n,D_fib={1:1,2:1}):
             
     return D_fib[n],D_fib
 ```
+Note that for recursion case only, tried 2 types of basic memoization: 
+```python
+#classic memoization recursion
+def fib22(n,D_fib={1:1,2:1}):
+        if n in D_fib: return D_fib[n],D_fib
+
+        D_fib[n-1]=fib22(n-1,D_fib)+fib22(n-2,D_fib)
+        return D_fib[n-1],D_fib
+```
+and
+```python
+#use of the advantage of the default mutable args
+def fib23(n, D_fib={1:1,2:1}): 
+        try:
+            value = D_fib[n] 
+
+        except KeyError:
+            value = fib23(n-1)+fib23(n-2) 
+            D_fib[n] = value 
+
+        return value
+```
+
 - we call a memoize function that call and manage the calculation: e.g. memoize(F(3))
 first case is basic. calculate F(3) and memoize only F(3)
 ```python
