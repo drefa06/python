@@ -47,3 +47,47 @@ This folder contains some tests files for applis and libs
 - superTypes_test.py: tests of lib/superTypes.py
 - test_inputNonBlocking.py: test of lib/inputNonBlocking.py
 - test_instanceDecorator.py: test of lib/instanceDecorator.py
+
+
+## usefull links ##
+
+List of some usefull link on python
+
+metaclass: 
+- (https://stackoverflow.com/questions/17801344/understanding-metaclass-and-inheritance-in-python)
+- (https://eli.thegreenplace.net/2011/08/14/python-metaclasses-by-example)
+
+logging:
+- (https://fangpenlin.com/posts/2012/08/26/good-logging-practice-in-python/)
+
+decorator:
+- (https://gist.github.com/Zearin/2f40b7b9cfc51132851a)
+- (https://pypi.org/project/timeout-decorator/)
+- (https://github.com/pnpnpn/timeout-decorator)
+- (https://gist.github.com/mgedmin/2839290)
+
+
+python2/3 compatibility
+- (http://python-future.org/compatible_idioms.html)
+
+python in exec:
+- (https://anthony-tuininga.github.io/cx_Freeze/)
+
+game:
+- (https://www.pandadeath.com/level-0.html)
+- (https://github.com/jeknov/aiAlgorithmsWithPacman)
+
+obfuscator:
+- (https://github.com/brianhou/bombast)
+
+multiple dispatch:
+- (https://pypi.org/project/multipledispatch/)
+- (https://en.wikipedia.org/wiki/Multiple_dispatch#Python)
+
+multi threading:
+- (https://stackoverflow.com/questions/919897/how-to-find-a-thread-id-in-python)
+
+project organisation
+- (https://docs.python-guide.org/writing/structure/)
+- (https://github.com/kennethreitz/samplemod)
+
