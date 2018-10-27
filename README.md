@@ -65,7 +65,10 @@ decorator:
 - (https://pypi.org/project/timeout-decorator/)
 - (https://github.com/pnpnpn/timeout-decorator)
 - (https://gist.github.com/mgedmin/2839290)
-
+- (https://github.com/lord63/awesome-python-decorator)
+- (https://wiki.python.org/moin/PythonDecorators)
+- (https://wiki.python.org/moin/PythonDecoratorLibrary)
+- (https://www.python.org/dev/peps/pep-0318/)
 
 python2/3 compatibility
 - (http://python-future.org/compatible_idioms.html)
@@ -79,6 +82,9 @@ game:
 
 obfuscator:
 - (https://github.com/brianhou/bombast)
+- (https://reverseengineering.stackexchange.com/questions/1943/what-are-the-techniques-and-tools-to-obfuscate-python-programs)
+- (https://bits.citrusbyte.com/protecting-a-python-codebase/)
+- (https://medium.com/@xpl/protecting-python-sources-using-cython-dcd940bb188e)
 
 multiple dispatch:
 - (https://pypi.org/project/multipledispatch/)
@@ -90,4 +96,6 @@ multi threading:
 project organisation
 - (https://docs.python-guide.org/writing/structure/)
 - (https://github.com/kennethreitz/samplemod)
+- (https://python-packaging.readthedocs.io/en/latest/)
+- (https://blog.ionelmc.ro/2014/05/25/python-packaging/)
 
